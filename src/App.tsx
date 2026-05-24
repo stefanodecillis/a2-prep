@@ -758,8 +758,12 @@ export default function App() {
 
     // Clean up text if it contains markdown or special symbols inside prompt
     let cleanedText = text
-      .replace(/_+/g, ' ... ') // replace fill-in-the-blank underscores with ellipsis for better speech pacing
-      .replace(/[*#`]/g, '');
+      .replace(/\[\d+\]/g, '')   // strip CILS slot markers like [1], [12]
+      .replace(/[\r\n]+/g, ' ')  // newlines (dialog turns, multi-line passages) → space for continuous utterance
+      .replace(/_+/g, ' ... ')   // fill-in-the-blank underscores → ellipsis for better speech pacing
+      .replace(/[*#`]/g, '')
+      .replace(/\s{2,}/g, ' ')   // collapse any double spaces introduced by the strips above
+      .trim();
 
     const utterance = new SpeechSynthesisUtterance(cleanedText);
     utterance.lang = 'it-IT';
@@ -1437,7 +1441,7 @@ export default function App() {
                   {/* Passage context block if provided (important for Reading Comprehension) */}
                   {questions[currentIndex]?.context && (
                     <div className="bg-slate-100 rounded-2xl p-5 mb-6 border border-slate-200/60 font-medium text-sm leading-relaxed text-slate-700 italic flex justify-between items-start gap-4">
-                      <div className="flex-grow">
+                      <div className="flex-grow whitespace-pre-line">
                         {questions[currentIndex]?.category === "Ascolto" ? (
                           <div className="flex flex-col gap-1 text-xs">
                             <span className="text-emerald-700 font-extrabold flex items-center gap-1">📋 REGISTRAZIONE AUDIO (Testo nascosto)</span>
@@ -1473,7 +1477,7 @@ export default function App() {
 
                   {/* Question main prompt text */}
                   <div className="mb-6 flex justify-between items-start gap-4">
-                    <h3 className="text-lg md:text-xl font-extrabold text-slate-900 leading-snug">
+                    <h3 className="text-lg md:text-xl font-extrabold text-slate-900 leading-snug whitespace-pre-line">
                       {highlightDifficultWords(questions[currentIndex]?.questionText)}
                     </h3>
                     <button
