@@ -1,0 +1,8 @@
+{
+  "name": "Italian A2 Exam Prep",
+  "description": "Prepare for the Italian A2 language exam with customized 50-question quizzes, dynamic AI feedback, and detailed grammatical explanations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

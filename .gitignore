@@ -1,0 +1,14 @@
+node_modules/
+build/
+dist/
+coverage/
+# Anchor to repo root — the SQLite file lives at /data/, but src/data/
+# contains source files (curated questions, official samples) that MUST ship.
+/data/
+/generated_images/
+.DS_Store
+*.log
+.env*
+!.env.example
+.vscode/
+.idea/

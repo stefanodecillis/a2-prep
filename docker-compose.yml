@@ -1,0 +1,29 @@
+services:
+  a2-prep:
+    # Pull the multi-arch image published by .github/workflows/ci.yml.
+    # The IMAGE env var lets you point at a specific sha-pinned tag if needed,
+    # otherwise it defaults to :latest.
+    image: ${IMAGE:-ghcr.io/stefanodecillis/a2-prep:latest}
+    # Uncomment `build:` (and comment out `image:` above) to build locally
+    # from source instead of pulling from the registry.
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    container_name: a2-prep
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY:?GEMINI_API_KEY is required}
+      - PORT=3000
+      - DB_PATH=/data/app.db
+      - NODE_ENV=production
+      # Image generation is opt-in and costs real money per call. Leave false
+      # unless you specifically want occasional image-bearing questions.
+      - IMAGE_GEN_ENABLED=${IMAGE_GEN_ENABLED:-false}
+      - IMAGE_GEN_PROBABILITY=${IMAGE_GEN_PROBABILITY:-0.1}
+      - IMAGE_GEN_BATCH_SIZE=${IMAGE_GEN_BATCH_SIZE:-2}
+    volumes:
+      # Holds the SQLite file AND any AI-generated images, so both survive
+      # container restarts and image upgrades.
+      - ./data:/data
