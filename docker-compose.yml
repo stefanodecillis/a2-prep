@@ -27,3 +27,27 @@ services:
       # Holds the SQLite file AND any AI-generated images, so both survive
       # container restarts and image upgrades.
       - ./data:/data
+    labels:
+      # Watchtower only updates containers that carry this label
+      # (because the watchtower service sets WATCHTOWER_LABEL_ENABLE=true).
+      - com.centurylinklabs.watchtower.enable=true
+
+  # Polls the registry every WATCHTOWER_POLL_INTERVAL seconds and replaces any
+  # opted-in container whose image has a newer digest. Scoped via label so it
+  # only touches a2-prep, not other unrelated containers on the same VM.
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: a2-prep-watchtower
+    restart: unless-stopped
+    environment:
+      - WATCHTOWER_LABEL_ENABLE=true      # only watch labelled containers
+      - WATCHTOWER_CLEANUP=true           # remove old images after upgrade
+      - WATCHTOWER_INCLUDE_RESTARTING=true
+      - WATCHTOWER_POLL_INTERVAL=${WATCHTOWER_POLL_INTERVAL:-300}
+      - TZ=${TZ:-Europe/Rome}
+      # If you keep the GHCR image private, drop a docker auth file at
+      # ./watchtower/config.json (run `docker login ghcr.io` and copy
+      # ~/.docker/config.json) and uncomment the volume below.
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      # - ./watchtower/config.json:/config.json:ro

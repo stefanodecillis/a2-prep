@@ -80,7 +80,10 @@ Then http://&lt;vm-ip&gt;:3000. The SQLite DB and AI-generated images live in
 `./data/` on the host, so they survive `docker compose down && up` and image
 upgrades.
 
-To update when a new image is published:
+Updates happen automatically: the Watchtower sidecar polls GHCR every 5
+minutes (override via `WATCHTOWER_POLL_INTERVAL` in `.env`) and swaps the
+a2-prep container in when a new image lands on `:latest`. Manual upgrades
+still work too:
 
 ```sh
 docker compose pull && docker compose up -d
