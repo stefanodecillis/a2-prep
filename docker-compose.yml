@@ -23,6 +23,13 @@ services:
       - IMAGE_GEN_ENABLED=${IMAGE_GEN_ENABLED:-false}
       - IMAGE_GEN_PROBABILITY=${IMAGE_GEN_PROBABILITY:-0.1}
       - IMAGE_GEN_BATCH_SIZE=${IMAGE_GEN_BATCH_SIZE:-2}
+      # Question-bank growth — on by default so the bank fills past 109 items
+      # within the first few minutes after deploy.
+      - WARMUP_ON_BOOT=${WARMUP_ON_BOOT:-true}
+      - WARMUP_TARGET_SIZE=${WARMUP_TARGET_SIZE:-300}
+      - TOPUP_EVERY_N=${TOPUP_EVERY_N:-5}
+      - TOPUP_BATCH_SIZE=${TOPUP_BATCH_SIZE:-40}
+      - MAX_BANK_SIZE=${MAX_BANK_SIZE:-2000}
     volumes:
       # Holds the SQLite file AND any AI-generated images, so both survive
       # container restarts and image upgrades.

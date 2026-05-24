@@ -258,6 +258,60 @@ export class AppDb {
     return picked.map(rowToQuestion);
   }
 
+  /**
+   * Count enabled questions that this browser has NOT seen recently. Mirrors
+   * the exclusion logic of `fetchQuestionsForBrowser` so the top-up trigger
+   * can decide based on what the user actually has left — not on raw bank
+   * size.
+   */
+  countUnseenForBrowser(browserId: string, examType: string): number {
+    const sinceMs = Date.now() - SEEN_WINDOW_DAYS * 24 * 3600 * 1000;
+    const examFilter = examType === 'all' ? null : examType;
+    const sql = examFilter
+      ? `SELECT COUNT(*) AS c FROM questions
+           WHERE is_disabled = 0 AND exam_type = ?
+             AND id NOT IN (
+               SELECT question_id FROM seen_questions
+                 WHERE browser_id = ? AND seen_at >= ?
+                 ORDER BY seen_at DESC LIMIT ?
+             )`
+      : `SELECT COUNT(*) AS c FROM questions
+           WHERE is_disabled = 0
+             AND id NOT IN (
+               SELECT question_id FROM seen_questions
+                 WHERE browser_id = ? AND seen_at >= ?
+                 ORDER BY seen_at DESC LIMIT ?
+             )`;
+    const row = (examFilter
+      ? this.db.prepare(sql).get(examFilter, browserId, sinceMs, SEEN_EXCLUDE_CAP)
+      : this.db.prepare(sql).get(browserId, sinceMs, SEEN_EXCLUDE_CAP)) as { c: number };
+    return row.c;
+  }
+
+  /**
+   * Return the most-recently-inserted question texts (normalized form would
+   * lose punctuation cues for Gemini; we use the raw text). Used by the
+   * top-up prompt as a "do not repeat these patterns" hint to push novelty.
+   */
+  recentQuestionTexts(examType: string, limit: number): string[] {
+    const examFilter = examType === 'all' ? null : examType;
+    // ORDER BY (created_at, rowid) so same-millisecond inserts have a
+    // deterministic tiebreaker (rowid grows monotonically per insert).
+    const rows = (examFilter
+      ? this.db.prepare(
+          `SELECT question_text FROM questions
+             WHERE is_disabled = 0 AND exam_type = ?
+             ORDER BY created_at DESC, rowid DESC LIMIT ?`
+        ).all(examFilter, limit)
+      : this.db.prepare(
+          `SELECT question_text FROM questions
+             WHERE is_disabled = 0
+             ORDER BY created_at DESC, rowid DESC LIMIT ?`
+        ).all(limit)
+    ) as { question_text: string }[];
+    return rows.map(r => r.question_text);
+  }
+
   /** Look up a cached explanation for (question, selected option). */
   getCachedExplanation(questionId: string, selectedIndex: number): string | null {
     const row = this.getExplanationStmt.get(questionId, selectedIndex) as { body_markdown: string } | undefined;

@@ -130,6 +130,67 @@ describe('AppDb.fetchQuestionsForBrowser', () => {
   });
 });
 
+describe('AppDb.countUnseenForBrowser', () => {
+  beforeEach(() => {
+    const seeds = Array.from({ length: 12 }, (_, i) =>
+      makeQ({ id: `u${i}`, questionText: `unseen-test ${i}` }),
+    );
+    db.insertQuestions(seeds, 'seed');
+  });
+
+  it('returns total enabled count for a brand-new browser', () => {
+    expect(db.countUnseenForBrowser('newcomer', 'all')).toBe(12);
+  });
+
+  it('decreases after each fetch', () => {
+    const before = db.countUnseenForBrowser('b1', 'all');
+    db.fetchQuestionsForBrowser({ browserId: 'b1', mode: 'practice', examType: 'all', count: 5 });
+    const after = db.countUnseenForBrowser('b1', 'all');
+    expect(after).toBe(before - 5);
+  });
+
+  it('isolates state between browsers', () => {
+    db.fetchQuestionsForBrowser({ browserId: 'alice', mode: 'practice', examType: 'all', count: 8 });
+    expect(db.countUnseenForBrowser('alice', 'all')).toBe(4);
+    expect(db.countUnseenForBrowser('bob', 'all')).toBe(12);
+  });
+
+  it('grows again when fresh questions are inserted', () => {
+    db.fetchQuestionsForBrowser({ browserId: 'b1', mode: 'practice', examType: 'all', count: 10 });
+    expect(db.countUnseenForBrowser('b1', 'all')).toBe(2);
+    db.insertQuestions(
+      [makeQ({ id: 'fresh1', questionText: 'fresh-1' }), makeQ({ id: 'fresh2', questionText: 'fresh-2' })],
+      'gemini',
+    );
+    expect(db.countUnseenForBrowser('b1', 'all')).toBe(4);
+  });
+
+  it('excludes disabled questions from the count', () => {
+    // Flag one until it auto-disables (3 flags by default)
+    for (let i = 0; i < 3; i++) db.flagQuestion('u0');
+    expect(db.countUnseenForBrowser('fresh-browser', 'all')).toBe(11);
+  });
+});
+
+describe('AppDb.recentQuestionTexts', () => {
+  it('returns the N most-recently-inserted question texts (rowid-tiebroken)', () => {
+    db.insertQuestions([makeQ({ id: 'r1', questionText: 'oldest' })], 'seed');
+    db.insertQuestions([makeQ({ id: 'r2', questionText: 'middle' })], 'gemini');
+    db.insertQuestions([makeQ({ id: 'r3', questionText: 'newest' })], 'gemini');
+    const recent = db.recentQuestionTexts('all', 2);
+    expect(recent.length).toBe(2);
+    // Order is created_at DESC, rowid DESC — newest insert wins, "oldest" never appears
+    expect(recent).not.toContain('oldest');
+  });
+
+  it('respects the limit', () => {
+    for (let i = 0; i < 10; i++) {
+      db.insertQuestions([makeQ({ id: `rl${i}`, questionText: `limit-${i}` })], 'gemini');
+    }
+    expect(db.recentQuestionTexts('all', 3).length).toBe(3);
+  });
+});
+
 describe('AppDb.flagQuestion', () => {
   beforeEach(() => {
     db.insertQuestions([makeQ({ id: 'q1' })], 'seed');

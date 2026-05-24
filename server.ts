@@ -10,10 +10,11 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { getDb } from './server/db';
-import { seedFromCurated } from './server/seed';
+import { seedFromCurated, warmupIfNeeded } from './server/seed';
 import { isWellFormedQuestion } from './server/validate';
 import { officialSamples } from './src/data/officialSamples';
 import { generateImageQuestions, getImagesDir, imageGenBatchSize, imageGenProbability, isImageGenEnabled } from './server/images';
+import { generateBatchAndPersist, maxBankSize } from './server/topup';
 
 /**
  * Build a short few-shot block from real exam samples that match the
@@ -50,6 +51,11 @@ dotenv.config();
 // Boot the SQLite layer and seed the static question bank if this is a fresh deploy.
 // Idempotent on repeated boots.
 seedFromCurated();
+
+// Optional: warm up the bank to ~WARMUP_TARGET_SIZE questions on first boot,
+// so users don't immediately exhaust the 109 seeded items. Fire-and-forget —
+// we don't want to block server start on Gemini latency.
+warmupIfNeeded().catch(err => console.warn('[warmup] failed:', err?.message));
 
 const resolvedFilename = (typeof __filename !== 'undefined') 
   ? __filename 
@@ -483,18 +489,29 @@ app.post('/api/quiz/start', async (req: Request, res: Response) => {
       count: safeCount,
     });
 
-    // Decide whether to fire a background top-up. Trigger when the available
-    // pool (for this examType) is < 1.5x the requested count.
-    const stats = db.stats();
-    const poolSize = stats.byExamType[examType] || stats.totalQuestions;
-    if (!isGeminiRateLimited() && process.env.GEMINI_API_KEY && poolSize < safeCount * 1.5) {
-      // Fire-and-forget — don't await
-      backgroundTopUp(examType).catch(err =>
+    // Decide whether to fire a background top-up. Two independent triggers:
+    //
+    //   (a) per-browser scarcity — the *unseen* count for this browser is
+    //       under 1.5× the requested count. This is the right metric: it
+    //       answers "is this specific user about to run out of fresh
+    //       questions?", not the old global-bank-size question.
+    //   (b) periodic — every TOPUP_EVERY_N quiz starts, regardless of (a),
+    //       so the bank keeps growing organically. Capped by MAX_BANK_SIZE
+    //       inside the helper.
+    const unseen = db.countUnseenForBrowser(browserId, examType);
+    topupTicks += 1;
+    const periodicDue = topupTicks % topupEveryN() === 0;
+    const scarcityDue = unseen < safeCount * 1.5;
+    if ((scarcityDue || periodicDue) && !isGeminiRateLimited() && process.env.GEMINI_API_KEY) {
+      const batchSize = topupBatchSize();
+      generateBatchAndPersist(getGemini(), examType, batchSize).catch(err =>
         console.warn('[top-up] background generation failed:', err?.message)
       );
     }
+    // Independent image-batch dice roll (off by default).
+    maybeFireImageBatch();
 
-    res.json({ success: true, questions, poolSize });
+    res.json({ success: true, questions, unseen, poolSize: db.stats().byExamType[examType] || db.stats().totalQuestions });
   } catch (error: any) {
     console.error('[quiz/start] error:', error);
     res.status(500).json({ success: false, error: 'Failed to start quiz: ' + error?.message });
@@ -526,60 +543,32 @@ app.get('/api/questions/stats', (_req: Request, res: Response) => {
   }
 });
 
-// Background top-up: ask Gemini for a small batch of questions and persist
-// whatever validates. Used by /api/quiz/start when the pool is thin.
-async function backgroundTopUp(examType: string): Promise<void> {
-  if (isGeminiRateLimited()) return;
-  console.log(`[top-up] requesting batch for examType=${examType}`);
-  // Reuse the same prompt and schema as /api/generate-questions by making an
-  // internal HTTP call would be wasteful — instead inline a minimal version.
-  try {
-    const ai = getGemini();
-    const prompt = `Generate a JSON array of 20 fresh Italian QCER A2 exam questions for examType="${examType}". `
-      + `Each item: { id (unique string starting with "gen_a2_${examType}_"), category ('Grammatica'|'Vocabolario'|'Lettura'|'Situazioni'), section, questionText (use "__________" as the blank), options (array of 4 strings, or 3 if examType starts with "cils"), correctAnswerIndex (0-based, must point to a valid option), explanation, difficulty:"A2", optional context }. `
-      + `Strictly valid A2 Italian grammar; no duplicates within the batch.`;
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.5-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.ARRAY,
-          items: {
-            type: Type.OBJECT,
-            properties: {
-              id: { type: Type.STRING },
-              category: { type: Type.STRING },
-              section: { type: Type.STRING },
-              questionText: { type: Type.STRING },
-              options: { type: Type.ARRAY, items: { type: Type.STRING } },
-              correctAnswerIndex: { type: Type.INTEGER },
-              explanation: { type: Type.STRING },
-              difficulty: { type: Type.STRING },
-              context: { type: Type.STRING },
-            },
-            required: ['id', 'category', 'section', 'questionText', 'options', 'correctAnswerIndex', 'explanation', 'difficulty'],
-          },
-        },
-      },
-    });
-    const items = JSON.parse(response.text || '[]');
-    const valid = (Array.isArray(items) ? items : []).filter(isWellFormedQuestion);
-    if (valid.length > 0) {
-      const inserted = getDb().insertQuestions(valid, 'gemini');
-      console.log(`[top-up] inserted ${inserted} new questions (of ${valid.length} valid)`);
-    }
+// Periodic top-up bookkeeping. Resets on restart, which is fine — the bank
+// itself is persistent.
+let topupTicks = 0;
 
-    // Image-bearing questions are an expensive extra. Run them only with the
-    // configured probability per top-up call, and only when explicitly enabled.
-    if (isImageGenEnabled() && Math.random() < imageGenProbability()) {
-      generateImageQuestions(ai, imageGenBatchSize(), examType).catch(err =>
-        console.warn('[top-up] image-question batch failed:', err?.message)
-      );
-    }
-  } catch (err: any) {
-    logApiWarning('background top-up', err);
-  }
+function topupEveryN(): number {
+  const raw = Number(process.env.TOPUP_EVERY_N);
+  if (!Number.isInteger(raw) || raw < 1 || raw > 100) return 5;
+  return raw;
+}
+
+function topupBatchSize(): number {
+  const raw = Number(process.env.TOPUP_BATCH_SIZE);
+  if (!Number.isInteger(raw) || raw < 5 || raw > 60) return 40;
+  return raw;
+}
+
+// Image-bearing questions piggyback on quiz starts (separate trigger from
+// the text top-up): only when the feature flag is on and a random roll
+// passes the configured probability.
+function maybeFireImageBatch(): void {
+  if (!isImageGenEnabled()) return;
+  if (Math.random() >= imageGenProbability()) return;
+  if (isGeminiRateLimited()) return;
+  generateImageQuestions(getGemini(), imageGenBatchSize(), 'all').catch(err =>
+    console.warn('[top-up] image-question batch failed:', err?.message)
+  );
 }
 
 // Explicit trigger for image-question generation — useful for manual top-ups
