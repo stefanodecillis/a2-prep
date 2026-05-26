@@ -905,6 +905,1058 @@ export const curatedQuestions: Question[] = [
     correctAnswerIndex: 1,
     explanation: "The customer specifies they are 4 adults with 3 large suitcases ('siamo quattro persone adulte e abbiamo tre grandi valigie') requiring a capacious trunk ('bagagliaio molto capiente').",
     difficulty: "A2"
+  },
+
+  // ===========================================================================
+  // PREFETTURA 5-EXAM BANK — additional Ascolto (listening) items.
+  // `category: "Ascolto"` auto-maps to prefetturaSection 'ascolto' at seed time
+  // (see inferPrefetturaSection in server/db.ts). The `context` field is the
+  // spoken passage — it is what the cached MP3 says (run scripts/prefetch-seed-audio.ts)
+  // and what the browser Web Speech fallback reads aloud.
+  // ===========================================================================
+  {
+    id: "pref_asc_001",
+    category: "Ascolto",
+    section: "Ascolto — Servizi Pubblici",
+    context: "Buongiorno, ho bisogno di rinnovare la mia carta d'identità perché è scaduta il mese scorso. Posso prenotare un appuntamento per la prossima settimana?",
+    questionText: "Ascolta la registrazione. Di che cosa ha bisogno la persona all'ufficio anagrafe?",
+    options: [
+      "Vuole pagare una multa per il parcheggio.",
+      "Vuole rinnovare la carta d'identità scaduta e prenotare un appuntamento.",
+      "Vuole denunciare il furto del passaporto.",
+      "Vuole iscrivere il figlio a scuola."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "The speaker says 'ho bisogno di rinnovare la mia carta d'identità perché è scaduta' and asks to book an appointment ('prenotare un appuntamento').",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_002",
+    category: "Ascolto",
+    section: "Ascolto — Servizi Pubblici",
+    context: "Le telefono dalla Questura: il suo permesso di soggiorno è pronto. Può venire a ritirarlo allo sportello immigrazione da lunedì a venerdì, dalle nove alle dodici.",
+    questionText: "Ascolta il messaggio. Perché la Questura ha telefonato?",
+    options: [
+      "Per dire che il permesso di soggiorno è pronto da ritirare.",
+      "Per comunicare che i documenti sono incompleti.",
+      "Per fissare un colloquio di lavoro.",
+      "Per annullare l'appuntamento di lunedì."
+    ],
+    correctAnswerIndex: 0,
+    explanation: "The message says 'il suo permesso di soggiorno è pronto' and explains when to collect it ('venire a ritirarlo').",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_003",
+    category: "Ascolto",
+    section: "Ascolto — Servizi Pubblici",
+    context: "Vorrei scegliere un medico di base vicino a casa mia. Abito in via Verdi. Quali documenti devo portare per fare la scelta del dottore?",
+    questionText: "Ascolta. Che cosa vuole fare la persona alla ASL?",
+    options: [
+      "Prenotare una visita dal dentista.",
+      "Scegliere un medico di base vicino a casa.",
+      "Ritirare i risultati delle analisi del sangue.",
+      "Pagare il ticket per una radiografia."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "The person says 'Vorrei scegliere un medico di base vicino a casa mia' and asks which documents are needed.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_004",
+    category: "Ascolto",
+    section: "Ascolto — Servizi Pubblici",
+    context: "Questo è un antibiotico: deve prendere una compressa due volte al giorno, dopo i pasti, per sei giorni. Mi raccomando, non lo prenda a stomaco vuoto.",
+    questionText: "Ascolta le indicazioni del farmacista. Come si prende questo medicinale?",
+    options: [
+      "Una compressa al giorno prima di dormire.",
+      "Due compresse insieme la mattina a digiuno.",
+      "Una compressa due volte al giorno, dopo i pasti.",
+      "Tre compresse al giorno per due settimane."
+    ],
+    correctAnswerIndex: 2,
+    explanation: "The pharmacist says 'una compressa due volte al giorno, dopo i pasti' and warns not to take it on an empty stomach.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_005",
+    category: "Ascolto",
+    section: "Ascolto — Servizi Pubblici",
+    context: "Buongiorno, sono qui per chiedere informazioni sull'assegno per i figli. Vorrei sapere quali documenti servono e se posso fare la domanda online.",
+    questionText: "Ascolta. Quale informazione cerca la signora all'INPS?",
+    options: [
+      "Come ottenere l'assegno per i figli e se si può fare domanda online.",
+      "Come prenotare una visita medica urgente.",
+      "Come cambiare il proprio indirizzo di residenza.",
+      "Come pagare le tasse universitarie."
+    ],
+    correctAnswerIndex: 0,
+    explanation: "She asks about 'l'assegno per i figli', which documents are needed and whether she can apply online ('fare la domanda online').",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_006",
+    category: "Ascolto",
+    section: "Ascolto — Servizi Pubblici",
+    context: "Devo spedire questa lettera con raccomandata e ricevuta di ritorno. È urgente, deve arrivare a Milano entro mercoledì. Quanto costa?",
+    questionText: "Ascolta. Che cosa vuole fare il cliente all'ufficio postale?",
+    options: [
+      "Ritirare un pacco arrivato dall'estero.",
+      "Spedire una raccomandata urgente a Milano.",
+      "Aprire un libretto di risparmio.",
+      "Pagare una bolletta della luce."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "The customer says 'Devo spedire questa lettera con raccomandata... deve arrivare a Milano entro mercoledì'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_007",
+    category: "Ascolto",
+    section: "Ascolto — Servizi Pubblici",
+    context: "Pronto, banca? Ho perso la mia carta bancomat ieri sera e vorrei bloccarla subito. Ho paura che qualcuno possa usarla.",
+    questionText: "Ascolta la telefonata. Perché il cliente chiama la banca?",
+    options: [
+      "Per chiedere un prestito per comprare una macchina.",
+      "Per bloccare la carta bancomat che ha perso.",
+      "Per aprire un nuovo conto corrente.",
+      "Per cambiare il codice segreto della carta."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "The caller says 'Ho perso la mia carta bancomat... e vorrei bloccarla subito'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_008",
+    category: "Ascolto",
+    section: "Ascolto — Servizi Pubblici",
+    context: "Mi serve un certificato di residenza per iscrivere mia figlia all'asilo. Devo presentarlo entro venerdì. È possibile averlo oggi stesso?",
+    questionText: "Ascolta. Di che cosa ha bisogno la persona e perché?",
+    options: [
+      "Di un certificato di residenza per iscrivere la figlia all'asilo.",
+      "Di un passaporto nuovo per andare all'estero.",
+      "Di una licenza per aprire un negozio.",
+      "Di un permesso per parcheggiare in centro."
+    ],
+    correctAnswerIndex: 0,
+    explanation: "The person needs 'un certificato di residenza per iscrivere mia figlia all'asilo' by Friday.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_009",
+    category: "Ascolto",
+    section: "Ascolto — Servizi Pubblici",
+    context: "Sono appena arrivato in Italia e devo richiedere il codice fiscale. Mi hanno detto che serve per firmare il contratto di lavoro. Che modulo devo compilare?",
+    questionText: "Ascolta. Che cosa deve richiedere l'uomo?",
+    options: [
+      "Una patente di guida internazionale.",
+      "Il codice fiscale, che serve per il contratto di lavoro.",
+      "Un biglietto del treno per Roma.",
+      "Una tessera per la palestra."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "He says 'devo richiedere il codice fiscale... serve per firmare il contratto di lavoro'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_010",
+    category: "Ascolto",
+    section: "Ascolto — Servizi Pubblici",
+    context: "Vorrei pagare questo bollettino della tassa sui rifiuti. Posso pagare con il bancomat o devo avere i contanti?",
+    questionText: "Ascolta. Che cosa vuole pagare il cliente allo sportello?",
+    options: [
+      "Una multa per eccesso di velocità.",
+      "L'abbonamento mensile dell'autobus.",
+      "Il bollettino della tassa sui rifiuti.",
+      "La retta della scuola privata."
+    ],
+    correctAnswerIndex: 2,
+    explanation: "The customer says 'Vorrei pagare questo bollettino della tassa sui rifiuti' and asks about payment methods.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_011",
+    category: "Ascolto",
+    section: "Ascolto — Trasporti",
+    context: "Attenzione: il treno regionale delle quindici e dieci diretto a Napoli viaggia con un ritardo di venti minuti. Ci scusiamo per il disagio.",
+    questionText: "Ascolta l'annuncio in stazione. Che cosa è successo al treno per Napoli?",
+    options: [
+      "È stato cancellato per uno sciopero.",
+      "Viaggia con venti minuti di ritardo.",
+      "Parte da un altro binario.",
+      "È arrivato in anticipo di dieci minuti."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "The announcement says the train to Naples 'viaggia con un ritardo di venti minuti'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_012",
+    category: "Ascolto",
+    section: "Ascolto — Trasporti",
+    context: "Vorrei due biglietti di sola andata per Firenze per il treno delle otto di domani mattina, in seconda classe.",
+    questionText: "Ascolta. Che cosa chiede la cliente alla biglietteria?",
+    options: [
+      "Due biglietti di sola andata per Firenze per domani mattina.",
+      "Un biglietto di andata e ritorno per Venezia per oggi.",
+      "Un abbonamento mensile per l'autobus.",
+      "Il rimborso di un biglietto non utilizzato."
+    ],
+    correctAnswerIndex: 0,
+    explanation: "She asks for 'due biglietti di sola andata per Firenze per il treno delle otto di domani mattina'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_013",
+    category: "Ascolto",
+    section: "Ascolto — Trasporti",
+    context: "Scusi, quale autobus devo prendere per andare all'ospedale? Sono qui alla fermata di piazza Garibaldi e non conosco bene la città.",
+    questionText: "Ascolta. Che cosa vuole sapere la persona?",
+    options: [
+      "A che ora chiude l'ospedale.",
+      "Quale autobus prendere per andare all'ospedale.",
+      "Quanto costa il taxi fino alla stazione.",
+      "Dove si trova la farmacia più vicina."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "The person asks 'quale autobus devo prendere per andare all'ospedale?'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_014",
+    category: "Ascolto",
+    section: "Ascolto — Trasporti",
+    context: "I passeggeri del volo per Barcellona sono pregati di recarsi all'uscita numero dodici. L'imbarco è iniziato. Si prega di tenere pronta la carta d'imbarco.",
+    questionText: "Ascolta l'annuncio. Che cosa devono fare i passeggeri per Barcellona?",
+    options: [
+      "Andare all'uscita dodici perché l'imbarco è iniziato.",
+      "Ritirare i bagagli al nastro numero tre.",
+      "Aspettare ancora un'ora in sala d'attesa.",
+      "Cambiare il volo a causa del maltempo."
+    ],
+    correctAnswerIndex: 0,
+    explanation: "The announcement asks passengers to go to 'uscita numero dodici' because 'l'imbarco è iniziato'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_015",
+    category: "Ascolto",
+    section: "Ascolto — Trasporti",
+    context: "Buonasera, vorrei prenotare un taxi per domani alle sei del mattino. Devo andare all'aeroporto e ho due valigie grandi.",
+    questionText: "Ascolta la telefonata. Per quando e perché la persona prenota il taxi?",
+    options: [
+      "Per stasera, per andare al ristorante.",
+      "Per domani alle sei, per andare all'aeroporto.",
+      "Per domenica, per andare allo stadio.",
+      "Per subito, per andare in ospedale."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "The caller books a taxi 'per domani alle sei del mattino' to go 'all'aeroporto'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_016",
+    category: "Ascolto",
+    section: "Ascolto — Acquisti e Ristoro",
+    context: "Cari clienti, solo per oggi la frutta e la verdura sono in offerta con lo sconto del trenta per cento. Approfittatene al reparto in fondo al negozio.",
+    questionText: "Ascolta l'annuncio al supermercato. Quale offerta c'è oggi?",
+    options: [
+      "Sconto del trenta per cento su frutta e verdura.",
+      "Pane gratis per i primi dieci clienti.",
+      "Sconto del cinquanta per cento sulla carne.",
+      "Un regalo per chi spende più di cento euro."
+    ],
+    correctAnswerIndex: 0,
+    explanation: "The announcement says 'la frutta e la verdura sono in offerta con lo sconto del trenta per cento'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_017",
+    category: "Ascolto",
+    section: "Ascolto — Acquisti e Ristoro",
+    context: "Vorrei un chilo di pomodori maturi e mezzo chilo di zucchine. Quanto viene in tutto? Ah, e sono freschi di oggi?",
+    questionText: "Ascolta. Che cosa vuole comprare la cliente al mercato?",
+    options: [
+      "Due chili di patate e una lattuga.",
+      "Un chilo di pomodori e mezzo chilo di zucchine.",
+      "Un chilo di mele e delle arance.",
+      "Solo del pane e del formaggio."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "She asks for 'un chilo di pomodori maturi e mezzo chilo di zucchine'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_018",
+    category: "Ascolto",
+    section: "Ascolto — Acquisti e Ristoro",
+    context: "Ho comprato questa maglietta ieri ma è troppo piccola. Vorrei cambiarla con una taglia più grande, magari la emme. Ho lo scontrino.",
+    questionText: "Ascolta. Perché il cliente è tornato al negozio?",
+    options: [
+      "Per restituire la maglietta e farsi ridare i soldi.",
+      "Per cambiare la maglietta con una taglia più grande.",
+      "Per comprare un paio di scarpe nuove.",
+      "Per lamentarsi del colore sbagliato."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "He says the shirt 'è troppo piccola' and wants to 'cambiarla con una taglia più grande'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_019",
+    category: "Ascolto",
+    section: "Ascolto — Acquisti e Ristoro",
+    context: "Buongiorno, vorrei ordinare una torta al cioccolato per otto persone. Mi serve per sabato pomeriggio, è il compleanno di mia moglie.",
+    questionText: "Ascolta. Che cosa ordina il cliente e per quando?",
+    options: [
+      "Una torta al cioccolato per sabato pomeriggio.",
+      "Dieci panini per il pranzo di oggi.",
+      "Una pizza grande per stasera.",
+      "Dei biscotti per la colazione di domani."
+    ],
+    correctAnswerIndex: 0,
+    explanation: "He orders 'una torta al cioccolato per otto persone... per sabato pomeriggio'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_020",
+    category: "Ascolto",
+    section: "Ascolto — Acquisti e Ristoro",
+    context: "Mi dia mezzo chilo di pesce fresco per fare la grigliata stasera. Quale mi consiglia? Vorrei qualcosa che non costi troppo.",
+    questionText: "Ascolta. Che cosa cerca la cliente in pescheria?",
+    options: [
+      "Della carne di maiale per il forno.",
+      "Del pesce fresco per una grigliata, non troppo caro.",
+      "Del formaggio stagionato e del prosciutto.",
+      "Del pollo già cotto da portare via."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "She asks for 'mezzo chilo di pesce fresco per fare la grigliata' that 'non costi troppo'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_021",
+    category: "Ascolto",
+    section: "Ascolto — Acquisti e Ristoro",
+    context: "Vorrei prenotare un tavolo per quattro persone per venerdì sera alle otto. Se possibile, vicino alla finestra. A nome Bianchi.",
+    questionText: "Ascolta. Che cosa prenota il cliente al ristorante?",
+    options: [
+      "Un tavolo per quattro persone venerdì sera alle otto.",
+      "Una camera d'albergo per due notti.",
+      "Un tavolo per due persone a pranzo.",
+      "Una sala per una festa di compleanno."
+    ],
+    correctAnswerIndex: 0,
+    explanation: "He books 'un tavolo per quattro persone per venerdì sera alle otto'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_022",
+    category: "Ascolto",
+    section: "Ascolto — Acquisti e Ristoro",
+    context: "Per me un cappuccino senza zucchero e una brioche vuota, per favore. Posso pagare con la carta?",
+    questionText: "Ascolta. Che cosa ordina il cliente al bar?",
+    options: [
+      "Un caffè macchiato e un cornetto alla marmellata.",
+      "Un tè caldo e una fetta di torta.",
+      "Un cappuccino senza zucchero e una brioche vuota.",
+      "Un succo d'arancia e un panino al prosciutto."
+    ],
+    correctAnswerIndex: 2,
+    explanation: "He orders 'un cappuccino senza zucchero e una brioche vuota'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_023",
+    category: "Ascolto",
+    section: "Ascolto — Acquisti e Ristoro",
+    context: "Vorrei due pizze da portare via: una margherita e una con funghi e prosciutto. Tra quanto tempo sono pronte?",
+    questionText: "Ascolta. Che cosa ordina la persona in pizzeria?",
+    options: [
+      "Due pizze da asporto: una margherita e una con funghi e prosciutto.",
+      "Una pizza da mangiare al tavolo con una birra.",
+      "Un piatto di pasta e un'insalata.",
+      "Tre panini e delle patatine fritte."
+    ],
+    correctAnswerIndex: 0,
+    explanation: "She orders 'due pizze da portare via: una margherita e una con funghi e prosciutto'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_024",
+    category: "Ascolto",
+    section: "Ascolto — Acquisti e Ristoro",
+    context: "Buonasera, vorrei ordinare la cena a domicilio. Abito in via Roma quindici. Quanto tempo ci vuole per la consegna?",
+    questionText: "Ascolta la telefonata. Che cosa vuole il cliente?",
+    options: [
+      "Prenotare un tavolo per stasera.",
+      "Ordinare la cena con consegna a casa.",
+      "Lamentarsi di un ordine sbagliato.",
+      "Sapere a che ora chiude il ristorante."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "He says 'vorrei ordinare la cena a domicilio' and asks about delivery time.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_025",
+    category: "Ascolto",
+    section: "Ascolto — Casa e Servizi",
+    context: "Chiamo per l'annuncio dell'appartamento in affitto. Vorrei sapere quante stanze ci sono e quanto costa al mese, spese incluse.",
+    questionText: "Ascolta. Quali informazioni chiede la persona sull'appartamento?",
+    options: [
+      "Quante stanze ci sono e quanto costa al mese.",
+      "Se l'appartamento è già stato venduto.",
+      "Quando può iniziare i lavori di ristrutturazione.",
+      "Se può tenere il cane in giardino."
+    ],
+    correctAnswerIndex: 0,
+    explanation: "She asks 'quante stanze ci sono e quanto costa al mese, spese incluse'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_026",
+    category: "Ascolto",
+    section: "Ascolto — Casa e Servizi",
+    context: "Si avvisano i condomini che giovedì mattina, dalle nove alle tredici, l'acqua sarà chiusa per lavori. Vi preghiamo di organizzarvi.",
+    questionText: "Ascolta l'avviso del condominio. Che cosa succederà giovedì mattina?",
+    options: [
+      "Ci sarà una riunione di condominio.",
+      "L'acqua sarà chiusa per lavori dalle nove alle tredici.",
+      "Verrà pulito il giardino comune.",
+      "L'ascensore non funzionerà tutto il giorno."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "The notice says 'l'acqua sarà chiusa per lavori' on Thursday morning from nine to thirteen.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_027",
+    category: "Ascolto",
+    section: "Ascolto — Casa e Servizi",
+    context: "Pronto, ho un problema in bagno: il rubinetto perde acqua e si è allagato il pavimento. Può venire oggi pomeriggio a ripararlo?",
+    questionText: "Ascolta. Perché la persona chiama l'idraulico?",
+    options: [
+      "Perché vuole installare una nuova cucina.",
+      "Perché il rubinetto perde acqua e ha allagato il bagno.",
+      "Perché manca la corrente elettrica in casa.",
+      "Perché il riscaldamento non funziona."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "She calls because 'il rubinetto perde acqua e si è allagato il pavimento' and asks the plumber to come fix it.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_028",
+    category: "Ascolto",
+    section: "Ascolto — Casa e Servizi",
+    context: "Le confermo l'appuntamento per martedì alle dieci. L'elettricista verrà a controllare l'impianto e a cambiare le prese rotte.",
+    questionText: "Ascolta il messaggio. Che cosa farà l'elettricista martedì?",
+    options: [
+      "Controllerà l'impianto e cambierà le prese rotte.",
+      "Pitturerà le pareti del soggiorno.",
+      "Riparerà la lavatrice in cucina.",
+      "Monterà una nuova porta d'ingresso."
+    ],
+    correctAnswerIndex: 0,
+    explanation: "The message says the electrician will 'controllare l'impianto e cambiare le prese rotte' on Tuesday.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_029",
+    category: "Ascolto",
+    section: "Ascolto — Casa e Servizi",
+    context: "Dobbiamo traslocare il quindici del mese prossimo. Abbiamo molti mobili pesanti, tra cui un armadio grande e un divano. Quanto costa il vostro servizio?",
+    questionText: "Ascolta. Di che cosa ha bisogno la persona?",
+    options: [
+      "Di una ditta per il trasloco di mobili pesanti.",
+      "Di un giardiniere per tagliare l'erba.",
+      "Di una persona per le pulizie di casa.",
+      "Di un meccanico per riparare il furgone."
+    ],
+    correctAnswerIndex: 0,
+    explanation: "They need movers: 'Dobbiamo traslocare... abbiamo molti mobili pesanti' and ask the cost of the service.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_030",
+    category: "Ascolto",
+    section: "Ascolto — Salute",
+    context: "Buongiorno, ho un forte mal di denti da due giorni. Vorrei un appuntamento il prima possibile, anche oggi se c'è posto.",
+    questionText: "Ascolta. Perché la persona telefona al dentista?",
+    options: [
+      "Per spostare un appuntamento già fissato.",
+      "Per un forte mal di denti, vuole un appuntamento urgente.",
+      "Per chiedere il prezzo di una pulizia dei denti.",
+      "Per ritirare una ricetta medica."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "He has 'un forte mal di denti da due giorni' and wants an appointment 'il prima possibile'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_031",
+    category: "Ascolto",
+    section: "Ascolto — Salute",
+    context: "Dottore, da ieri ho la febbre alta e mi fa male la gola. Non riesco a mangiare bene e mi sento molto stanco.",
+    questionText: "Ascolta. Quali sono i sintomi del paziente?",
+    options: [
+      "Mal di schiena e dolore alle gambe.",
+      "Febbre alta, mal di gola e stanchezza.",
+      "Mal di testa e problemi di vista.",
+      "Solo un leggero raffreddore."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "The patient says 'ho la febbre alta e mi fa male la gola... mi sento molto stanco'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_032",
+    category: "Ascolto",
+    section: "Ascolto — Salute",
+    context: "La chiamo dall'ottico: i suoi occhiali nuovi sono pronti. Può passare a ritirarli quando vuole, siamo aperti fino alle diciannove.",
+    questionText: "Ascolta il messaggio. Perché chiamano dall'ottico?",
+    options: [
+      "Per dire che gli occhiali nuovi sono pronti.",
+      "Per fissare una visita di controllo della vista.",
+      "Per comunicare che il negozio è chiuso.",
+      "Per offrire uno sconto sugli occhiali da sole."
+    ],
+    correctAnswerIndex: 0,
+    explanation: "The message says 'i suoi occhiali nuovi sono pronti' and gives the pickup hours.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_033",
+    category: "Ascolto",
+    section: "Ascolto — Salute",
+    context: "Le ricordiamo l'appuntamento per la visita di controllo di domani alle undici. Se non può venire, ci telefoni per disdire entro stasera.",
+    questionText: "Ascolta il messaggio. Che cosa ricorda l'ospedale al paziente?",
+    options: [
+      "Di pagare il ticket della visita precedente.",
+      "L'appuntamento per la visita di domani alle undici.",
+      "Di portare le analisi del sangue della settimana scorsa.",
+      "Che la visita è stata spostata alla prossima settimana."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "The voicemail reminds of 'l'appuntamento per la visita di controllo di domani alle undici'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_034",
+    category: "Ascolto",
+    section: "Ascolto — Lavoro e Scuola",
+    context: "La aspettiamo per il colloquio lunedì alle quindici nel nostro ufficio in via Dante. Per favore, porti il suo curriculum e un documento d'identità.",
+    questionText: "Ascolta. Che cosa deve portare la persona al colloquio?",
+    options: [
+      "Il curriculum e un documento d'identità.",
+      "Una foto e il libretto degli assegni.",
+      "Il contratto di lavoro già firmato.",
+      "Le referenze di tre datori di lavoro."
+    ],
+    correctAnswerIndex: 0,
+    explanation: "She must bring 'il suo curriculum e un documento d'identità' to the Monday interview.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_035",
+    category: "Ascolto",
+    section: "Ascolto — Lavoro e Scuola",
+    context: "Ciao, ti avviso che la prossima settimana il tuo turno cambia: invece della mattina, lavorerai di pomeriggio, dalle quattordici alle ventidue.",
+    questionText: "Ascolta. Che cosa cambia per la prossima settimana?",
+    options: [
+      "Il giorno di riposo passa al lunedì.",
+      "Il turno passa dalla mattina al pomeriggio.",
+      "Lo stipendio aumenta del dieci per cento.",
+      "Il posto di lavoro si sposta in un'altra città."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "The message says next week 'invece della mattina, lavorerai di pomeriggio, dalle quattordici alle ventidue'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_036",
+    category: "Ascolto",
+    section: "Ascolto — Lavoro e Scuola",
+    context: "Gentili genitori, vi invitiamo alla riunione di classe giovedì alle diciassette per parlare della gita scolastica. La vostra presenza è importante.",
+    questionText: "Ascolta. Di che cosa si parlerà alla riunione di giovedì?",
+    options: [
+      "Dei voti del primo trimestre.",
+      "Della gita scolastica.",
+      "Del nuovo orario delle lezioni.",
+      "Del costo della mensa scolastica."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "The meeting is 'per parlare della gita scolastica'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_037",
+    category: "Ascolto",
+    section: "Ascolto — Lavoro e Scuola",
+    context: "Il corso d'italiano per stranieri inizia lunedì prossimo. Le lezioni sono il lunedì e il mercoledì sera, dalle diciotto alle venti, nella sala due.",
+    questionText: "Ascolta. Quando si tengono le lezioni del corso d'italiano?",
+    options: [
+      "Il martedì e il giovedì mattina.",
+      "Tutti i giorni dalle nove alle dodici.",
+      "Il lunedì e il mercoledì sera, dalle diciotto alle venti.",
+      "Solo il sabato pomeriggio."
+    ],
+    correctAnswerIndex: 2,
+    explanation: "The lessons are 'il lunedì e il mercoledì sera, dalle diciotto alle venti'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_038",
+    category: "Ascolto",
+    section: "Ascolto — Lavoro e Scuola",
+    context: "Senti, sabato non posso lavorare perché ho una visita medica. Riesci a fare il cambio con me? Ti ricambio io il favore domenica.",
+    questionText: "Ascolta. Che cosa chiede il collega?",
+    options: [
+      "Di prestargli dei soldi fino a fine mese.",
+      "Di fare il cambio di turno sabato.",
+      "Di accompagnarlo dal medico.",
+      "Di finire un lavoro al posto suo stasera."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "He asks to swap shifts: 'sabato non posso lavorare... Riesci a fare il cambio con me?'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_039",
+    category: "Ascolto",
+    section: "Ascolto — Vita Quotidiana",
+    context: "Ecco le previsioni del fine settimana: sabato sarà nuvoloso con qualche pioggia, ma domenica tornerà il sole con temperature più alte.",
+    questionText: "Ascolta le previsioni del tempo. Com'è il tempo previsto per domenica?",
+    options: [
+      "Pioggia e vento forte tutto il giorno.",
+      "Neve in montagna e freddo intenso.",
+      "Sole e temperature più alte.",
+      "Nebbia fitta al mattino."
+    ],
+    correctAnswerIndex: 2,
+    explanation: "The forecast says 'domenica tornerà il sole con temperature più alte'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_040",
+    category: "Ascolto",
+    section: "Ascolto — Vita Quotidiana",
+    context: "Ciao! Ti va di venire a cena da me venerdì sera? Festeggiamo il mio nuovo lavoro. Iniziamo verso le otto, porta solo la voglia di divertirti!",
+    questionText: "Ascolta il messaggio. Per quale occasione è l'invito?",
+    options: [
+      "Per festeggiare un nuovo lavoro.",
+      "Per il compleanno di un bambino.",
+      "Per salutare un amico che parte.",
+      "Per vedere insieme una partita di calcio."
+    ],
+    correctAnswerIndex: 0,
+    explanation: "The invitation is to dinner on Friday to celebrate 'il mio nuovo lavoro'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_041",
+    category: "Ascolto",
+    section: "Ascolto — Vita Quotidiana",
+    context: "Allora, ci vediamo davanti al cinema alle venti e quaranta. Il film inizia alle ventuno. Ho già comprato i biglietti online, non preoccuparti.",
+    questionText: "Ascolta. A che ora e dove si incontrano gli amici?",
+    options: [
+      "Alle venti e quaranta, davanti al cinema, prima del film.",
+      "Alle ventuno, a casa, per cenare insieme.",
+      "Alle diciotto, alla stazione, per partire.",
+      "A mezzanotte, al bar, dopo il film."
+    ],
+    correctAnswerIndex: 0,
+    explanation: "They meet 'davanti al cinema alle venti e quaranta'; the film starts at ventuno (21:00).",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_042",
+    category: "Ascolto",
+    section: "Ascolto — Vita Quotidiana",
+    context: "Vorrei iscrivermi alla palestra. A che ora aprite la mattina? E quanto costa l'abbonamento per tre mesi?",
+    questionText: "Ascolta. Quali informazioni chiede la persona sulla palestra?",
+    options: [
+      "L'orario di apertura e il prezzo dell'abbonamento di tre mesi.",
+      "Se ci sono lezioni di nuoto per bambini.",
+      "Dove si trova il parcheggio più vicino.",
+      "Se può portare un amico gratis."
+    ],
+    correctAnswerIndex: 0,
+    explanation: "She asks 'A che ora aprite la mattina?' and 'quanto costa l'abbonamento per tre mesi?'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_043",
+    category: "Ascolto",
+    section: "Ascolto — Vita Quotidiana",
+    context: "Ti chiamo per avvisarti che la riunione di domani è rimandata a lunedì, alla stessa ora. Ci sono stati dei problemi e il direttore non c'è. Fammi sapere se va bene.",
+    questionText: "Ascolta il messaggio. Che cosa è successo alla riunione di domani?",
+    options: [
+      "È stata anticipata a stamattina.",
+      "È stata rimandata a lunedì alla stessa ora.",
+      "È stata annullata definitivamente.",
+      "Si farà online invece che in ufficio."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "The message says 'la riunione di domani è rimandata a lunedì, alla stessa ora'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_044",
+    category: "Ascolto",
+    section: "Ascolto — Vita Quotidiana",
+    context: "Scusa il disturbo, ma è quasi mezzanotte e la musica è un po' troppo alta. Domani devo svegliarmi presto per lavoro. Potresti abbassarla un po'?",
+    questionText: "Ascolta. Che cosa chiede il vicino di casa?",
+    options: [
+      "Di spegnere le luci del giardino.",
+      "Di abbassare la musica perché è tardi.",
+      "Di chiudere la finestra a causa del freddo.",
+      "Di spostare la macchina dal suo posto."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "The neighbour asks to lower the music ('Potresti abbassarla un po'?') because it's late and he has to wake up early.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_asc_045",
+    category: "Ascolto",
+    section: "Ascolto — Vita Quotidiana",
+    context: "Le ricordiamo che il libro che ha preso in prestito deve essere restituito entro lunedì. Se le serve ancora, può rinnovare il prestito per telefono.",
+    questionText: "Ascolta il messaggio della biblioteca. Che cosa deve fare la persona entro lunedì?",
+    options: [
+      "Pagare la quota annuale di iscrizione.",
+      "Restituire il libro preso in prestito, oppure rinnovarlo.",
+      "Ritirare un nuovo libro prenotato.",
+      "Riportare la tessera della biblioteca."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "The library reminds the person 'il libro... deve essere restituito entro lunedì', or they can renew it by phone.",
+    difficulty: "A2"
+  },
+  // ===========================================================================
+  // PREFETTURA 5-EXAM BANK — additional Lettura (reading) items.
+  // category 'Lettura' auto-maps to prefetturaSection 'lettura' at seed time.
+  // ===========================================================================
+  {
+    id: "pref_let_001",
+    category: "Lettura",
+    section: "Lettura — Avvisi e Comunicazioni",
+    context: "AVVISO DEL COMUNE: L'ufficio anagrafe resterà chiuso al pubblico venerdì 12 per lavori. Per le urgenze, scrivere a anagrafe@comune.it. Il servizio riaprirà regolarmente lunedì 15.",
+    questionText: "Leggi l'avviso. Che cosa deve fare chi ha un'urgenza venerdì 12?",
+    options: [
+      "Andare di persona all'ufficio anagrafe.",
+      "Scrivere un'email all'indirizzo indicato.",
+      "Aspettare fino al mese successivo.",
+      "Telefonare al numero verde del Comune."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "The notice says the office is closed Friday and 'Per le urgenze, scrivere a anagrafe@comune.it'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_let_002",
+    category: "Lettura",
+    section: "Lettura — Annunci",
+    context: "CORSO DI NUOTO PER PRINCIPIANTI — Tutti i martedì e giovedì dalle 18:00 alle 19:00 presso la piscina comunale. Iscrizioni aperte fino al 30 settembre. Sconto del 20% per le famiglie.",
+    questionText: "Leggi il volantino. Quando si tiene il corso di nuoto?",
+    options: [
+      "Il martedì e il giovedì sera.",
+      "Tutti i giorni la mattina presto.",
+      "Solo il fine settimana.",
+      "Il lunedì e il mercoledì pomeriggio."
+    ],
+    correctAnswerIndex: 0,
+    explanation: "The flyer says 'Tutti i martedì e giovedì dalle 18:00 alle 19:00'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_let_003",
+    category: "Lettura",
+    section: "Lettura — Messaggi",
+    context: "Messaggio di Giulia: «Ciao! Domani non posso venire in palestra, ho una riunione fino a tardi. Possiamo spostare a giovedì alla stessa ora? Fammi sapere!»",
+    questionText: "Leggi il messaggio. Che cosa propone Giulia?",
+    options: [
+      "Di andare in palestra domani come sempre.",
+      "Di spostare l'appuntamento in palestra a giovedì.",
+      "Di annullare l'abbonamento alla palestra.",
+      "Di incontrarsi al lavoro dopo la riunione."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "Giulia can't come tomorrow and proposes 'spostare a giovedì alla stessa ora'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_let_004",
+    category: "Lettura",
+    section: "Lettura — Cartelli e Regole",
+    context: "REGOLAMENTO CONDOMINIALE: È vietato fare rumore dalle 14:00 alle 16:00 e dopo le 22:00. La raccolta differenziata va fatta ogni giorno entro le 20:00. Grazie per la collaborazione.",
+    questionText: "Leggi il regolamento. In quale orario non si può fare rumore?",
+    options: [
+      "Solo la domenica mattina.",
+      "Dalle 14:00 alle 16:00 e dopo le 22:00.",
+      "Durante tutta la giornata.",
+      "Solo dalle 8:00 alle 10:00."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "The rules forbid noise 'dalle 14:00 alle 16:00 e dopo le 22:00'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_let_005",
+    category: "Lettura",
+    section: "Lettura — Avvisi e Comunicazioni",
+    context: "Gentile cliente, la bolletta della luce di questo mese è di 68 euro. La scadenza per il pagamento è il 28 del mese. Dopo questa data verrà applicata una penale.",
+    questionText: "Leggi l'avviso. Che cosa succede se si paga dopo il 28?",
+    options: [
+      "Non succede niente di particolare.",
+      "Viene applicata una penale.",
+      "La luce viene staccata subito.",
+      "Si riceve uno sconto il mese dopo."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "After the 28th 'verrà applicata una penale'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_let_006",
+    category: "Lettura",
+    section: "Lettura — Istruzioni",
+    context: "FOGLIO ILLUSTRATIVO — Sciroppo per la tosse. Adulti: 2 cucchiai 3 volte al giorno dopo i pasti. Non superare la dose indicata. Conservare in luogo fresco e asciutto, lontano dai bambini.",
+    questionText: "Leggi le istruzioni. Come devono prendere lo sciroppo gli adulti?",
+    options: [
+      "Due cucchiai tre volte al giorno dopo i pasti.",
+      "Un cucchiaio una volta al giorno a digiuno.",
+      "Tre cucchiai prima di dormire.",
+      "Mezzo bicchiere ogni due ore."
+    ],
+    correctAnswerIndex: 0,
+    explanation: "For adults: '2 cucchiai 3 volte al giorno dopo i pasti'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_let_007",
+    category: "Lettura",
+    section: "Lettura — Annunci",
+    context: "CERCASI COMMESSA per negozio di abbigliamento in centro. Richiesta esperienza di almeno un anno. Orario part-time, pomeriggio. Inviare il curriculum a lavoro@modashop.it.",
+    questionText: "Leggi l'annuncio. Che cosa è richiesto per questo lavoro?",
+    options: [
+      "Una laurea in economia.",
+      "Almeno un anno di esperienza.",
+      "La conoscenza di tre lingue straniere.",
+      "La disponibilità a lavorare di notte."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "The ad asks for 'esperienza di almeno un anno'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_let_008",
+    category: "Lettura",
+    section: "Lettura — Annunci",
+    context: "AFFITTASI bilocale luminoso, secondo piano con ascensore, vicino alla stazione. 600 euro al mese più spese. Non si accettano animali. Per info: 333-1234567.",
+    questionText: "Leggi l'annuncio. Quale informazione è vera sull'appartamento?",
+    options: [
+      "È al piano terra senza ascensore.",
+      "Si trova vicino alla stazione e non accetta animali.",
+      "Costa 600 euro spese incluse.",
+      "È un appartamento di quattro stanze."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "The ad says 'vicino alla stazione' and 'Non si accettano animali'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_let_009",
+    category: "Lettura",
+    section: "Lettura — Avvisi e Comunicazioni",
+    context: "Email dall'ufficio: «Gentile Signora, confermiamo il Suo appuntamento per il rinnovo del permesso di soggiorno per il giorno 10 alle ore 9:30. La preghiamo di portare due fototessere e la marca da bollo.»",
+    questionText: "Leggi l'email. Che cosa deve portare la signora all'appuntamento?",
+    options: [
+      "Due fototessere e una marca da bollo.",
+      "Il contratto di affitto e una bolletta.",
+      "Il passaporto e un certificato medico.",
+      "Soltanto la carta d'identità."
+    ],
+    correctAnswerIndex: 0,
+    explanation: "She must bring 'due fototessere e la marca da bollo'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_let_010",
+    category: "Lettura",
+    section: "Lettura — Cartelli e Regole",
+    context: "CARTELLO — Orario di apertura. Dal lunedì al venerdì: 8:30-13:00 e 15:00-19:00. Sabato: solo mattina. Domenica e festivi: chiuso.",
+    questionText: "Leggi il cartello. Quando è aperto il negozio il sabato?",
+    options: [
+      "Tutto il giorno, mattina e pomeriggio.",
+      "Solo la mattina.",
+      "Solo il pomeriggio.",
+      "È chiuso il sabato."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "The sign says 'Sabato: solo mattina'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_let_011",
+    category: "Lettura",
+    section: "Lettura — Avvisi e Comunicazioni",
+    context: "COMUNICAZIONE SCUOLA: Lunedì 5 le lezioni terminano alle 12:00 per la riunione degli insegnanti. Il servizio mensa non sarà disponibile. Si prega di organizzarsi per il pranzo dei bambini.",
+    questionText: "Leggi la comunicazione. Che cosa cambia lunedì 5?",
+    options: [
+      "Le lezioni iniziano più tardi del solito.",
+      "Le lezioni finiscono alle 12:00 e non c'è la mensa.",
+      "La scuola resta chiusa tutto il giorno.",
+      "C'è una gita scolastica al museo."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "On Monday 'le lezioni terminano alle 12:00' and 'Il servizio mensa non sarà disponibile'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_let_012",
+    category: "Lettura",
+    section: "Lettura — Messaggi",
+    context: "Marco scrive a un amico: «Sono andato in farmacia ma il medicinale che cercavo era finito. Il farmacista ha detto che arriva domani mattina. Puoi passare a prenderlo tu, visto che lavori lì vicino?»",
+    questionText: "Leggi il messaggio. Che cosa chiede Marco all'amico?",
+    options: [
+      "Di accompagnarlo dal medico.",
+      "Di passare in farmacia domani a prendere il medicinale.",
+      "Di comprargli qualcosa al supermercato.",
+      "Di prestargli dei soldi per la farmacia."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "Marco asks the friend to 'passare a prenderlo' tomorrow, since the friend works nearby.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_let_013",
+    category: "Lettura",
+    section: "Lettura — Annunci",
+    context: "MENÙ DEL GIORNO (pranzo, 12 euro): primo + secondo + acqua e caffè. Tutti i giorni dalle 12:30 alle 14:30. La sera, servizio alla carta. Chiuso il lunedì.",
+    questionText: "Leggi il menù. Quando è disponibile il menù del giorno a 12 euro?",
+    options: [
+      "A pranzo, dalle 12:30 alle 14:30.",
+      "Solo la sera dopo le 20:00.",
+      "Tutti i giorni a colazione.",
+      "Solo nel fine settimana."
+    ],
+    correctAnswerIndex: 0,
+    explanation: "The menù del giorno is at lunch 'dalle 12:30 alle 14:30'; in the evening it is à la carte.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_let_014",
+    category: "Lettura",
+    section: "Lettura — Avvisi e Comunicazioni",
+    context: "AVVISO DI GIACENZA: Abbiamo provato a consegnare un pacco a Suo nome, ma Lei era assente. Può ritirarlo all'ufficio postale di via Verdi entro 10 giorni, con un documento d'identità.",
+    questionText: "Leggi l'avviso. Perché il pacco non è stato consegnato?",
+    options: [
+      "Perché l'indirizzo era sbagliato.",
+      "Perché il destinatario era assente.",
+      "Perché mancava il francobollo.",
+      "Perché era troppo pesante."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "The delivery failed because 'Lei era assente'; it can be collected within 10 days with an ID.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_let_015",
+    category: "Lettura",
+    section: "Lettura — Messaggi",
+    context: "Email da Sara: «Ciao a tutti! Sabato 20 faccio una festa a casa mia per il mio compleanno. Si comincia alle 19. Se volete, portate qualcosa da bere. Fatemi sapere se venite!»",
+    questionText: "Leggi l'email. Che cosa chiede Sara agli amici?",
+    options: [
+      "Di portare un regalo costoso.",
+      "Di portare qualcosa da bere e di confermare se vengono.",
+      "Di arrivare prima delle 17.",
+      "Di cucinare la cena per tutti."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "Sara asks them to 'portate qualcosa da bere' and 'Fatemi sapere se venite'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_let_016",
+    category: "Lettura",
+    section: "Lettura — Cartelli e Regole",
+    context: "AVVISO AGLI UTENTI: A causa di lavori, la linea 5 dell'autobus è deviata. La fermata di Piazza Roma è temporaneamente sospesa. Usare la fermata di via Marconi, a 200 metri.",
+    questionText: "Leggi l'avviso. Che cosa devono fare i passeggeri della linea 5?",
+    options: [
+      "Prendere il treno al posto dell'autobus.",
+      "Usare la fermata di via Marconi.",
+      "Aspettare alla fermata di Piazza Roma.",
+      "Comprare un nuovo biglietto."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "The Piazza Roma stop is suspended; passengers must 'Usare la fermata di via Marconi'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_let_017",
+    category: "Lettura",
+    section: "Lettura — Cartelli e Regole",
+    context: "REGOLE DELLA BIBLIOTECA: Si possono prendere in prestito fino a 3 libri per 30 giorni. È possibile rinnovare il prestito una volta. In sala lettura sono richiesti il silenzio e il cellulare spento.",
+    questionText: "Leggi le regole. Quanti libri si possono prendere in prestito?",
+    options: [
+      "Un solo libro per 15 giorni.",
+      "Fino a 3 libri per 30 giorni.",
+      "Cinque libri senza limite di tempo.",
+      "Nessun libro, solo consultazione in sala."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "The rules allow 'fino a 3 libri per 30 giorni', renewable once.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_let_018",
+    category: "Lettura",
+    section: "Lettura — Avvisi e Comunicazioni",
+    context: "GENTILI CLIENTI: Da lunedì il supermercato cambia orario. Saremo aperti dalle 8:00 alle 21:00 dal lunedì al sabato, e la domenica dalle 9:00 alle 13:00. Vi aspettiamo!",
+    questionText: "Leggi l'avviso. A che ora apre il supermercato la domenica?",
+    options: [
+      "Alle 8:00, come gli altri giorni.",
+      "Alle 9:00.",
+      "Resta chiuso la domenica.",
+      "Alle 21:00."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "On Sundays the supermarket is open 'dalle 9:00 alle 13:00'.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_let_019",
+    category: "Lettura",
+    section: "Lettura — Avvisi e Comunicazioni",
+    context: "Email dalla ASL: «Le comunichiamo che i risultati delle Sue analisi sono pronti. Può scaricarli dal sito con il Suo codice fiscale, oppure ritirarli allo sportello dal lunedì al venerdì.»",
+    questionText: "Leggi l'email. Come può avere i risultati delle analisi la persona?",
+    options: [
+      "Soltanto per posta a casa.",
+      "Scaricandoli dal sito oppure ritirandoli allo sportello.",
+      "Telefonando al medico di base.",
+      "Aspettando una seconda email."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "Results can be downloaded online with the codice fiscale or collected at the desk Mon–Fri.",
+    difficulty: "A2"
+  },
+  {
+    id: "pref_let_020",
+    category: "Lettura",
+    section: "Lettura — Cartelli e Regole",
+    context: "CARTELLO NEL PARCO: Vietato l'ingresso ai cani senza guinzaglio. Non calpestare le aiuole. Il parco chiude al tramonto. Per le emergenze, chiamare il numero indicato all'ingresso.",
+    questionText: "Leggi il cartello. Che cosa è vietato fare nel parco?",
+    options: [
+      "Portare i cani con il guinzaglio.",
+      "Entrare con i cani senza guinzaglio e calpestare le aiuole.",
+      "Fare un picnic sull'erba.",
+      "Entrare prima del tramonto."
+    ],
+    correctAnswerIndex: 1,
+    explanation: "The sign forbids dogs 'senza guinzaglio' and stepping on the flowerbeds ('Non calpestare le aiuole').",
+    difficulty: "A2"
   }
 ];
 
