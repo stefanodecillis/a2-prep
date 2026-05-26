@@ -238,7 +238,7 @@ export function expectedRegularEnding(
   // the present-indicative pattern this helper predicts (e.g. -are tu = -a,
   // not -i; negative tu = non + infinitive), so skip it too rather than
   // false-reject valid items.
-  if (tense.includes('composto') || tense === 'imperativo') {
+  if (tense.includes('composto') || tense === 'imperativo' || tense === 'condizionale') {
     return null;
   }
 

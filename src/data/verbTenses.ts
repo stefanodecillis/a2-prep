@@ -5,6 +5,7 @@ export type TenseId =
   | 'passato_composto'
   | 'imperfetto'
   | 'futuro_semplice'
+  | 'condizionale'
   | 'imperativo';
 
 /**
@@ -22,6 +23,7 @@ export const TENSE_ORDER: TenseId[] = [
   'passato_composto',
   'imperfetto',
   'futuro_semplice',
+  'condizionale',
   'imperativo',
 ] as const;
 
@@ -621,6 +623,156 @@ I verbi in **-care/-gare** (cercare, pagare) aggiungono **h** per mantenere il s
 };
 
 // ---------------------------------------------------------------------------
+// CONDIZIONALE PRESENTE
+// ---------------------------------------------------------------------------
+
+const CONDIZIONALE: TenseDef = {
+  id: 'condizionale',
+  labelIt: 'Condizionale Presente',
+  labelEn: 'Conditional (Present)',
+  isCompound: false,
+  rules: `Il **condizionale presente** si usa per esprimere **richieste cortesi**, **desideri**, **consigli** e **opinioni ipotetiche**. È uno dei tempi più importanti dell'italiano di tutti i giorni, perché serve a essere educati.
+
+**Quando si usa:**
+- Richieste cortesi: ***Vorrei** un caffè, per favore. **Potrebbe** ripetere?*
+- Desideri e sogni: ***Mi piacerebbe** andare in Italia. **Vorrei** parlare bene l'italiano.*
+- Consigli (a un'altra persona): ***Dovresti** riposare un po'. **Faresti** meglio a chiamare il medico.*
+- Opinioni e ipotesi: ***Sarebbe** bello vivere al mare. Secondo me, **andrebbe** bene così.*
+
+**Formazione:** stessa **radice del futuro semplice** + desinenze del condizionale. Quindi se conosci il futuro, sai già il condizionale: cambia solo la fine.
+
+**Cambio vocalico (-are → -er-):** i verbi in **-are** cambiano la **-a-** in **-e-**: *parlare → parl**er**ei*, *mangiare → mang**er**ei*. I verbi in **-ere** e **-ire** mantengono la vocale: *prendere → prend**er**ei*, *dormire → dorm**ir**ei*.
+
+**Desinenze (per tutte le coniugazioni):**
+- io: **-ei** (parlerei)
+- tu: **-resti** (parleresti)
+- lui/lei: **-rebbe** (parlerebbe)
+- noi: **-remmo** (parleremmo — attenzione, due **m**!)
+- voi: **-reste** (parlereste)
+- loro: **-rebbero** (parlerebbero)
+
+**Regole ortografiche:**
+- Verbi in **-care/-gare** prendono una **-h-** per mantenere il suono duro: *cercare → **cercherei***, *pagare → **pagherei***.
+- Verbi in **-ciare/-giare** perdono la **-i-**: *mangiare → **mangerei***, *cominciare → **comincerei***.
+
+**Irregolari (stessa radice del futuro semplice):**
+- **essere**: sarei, saresti, sarebbe, saremmo, sareste, sarebbero
+- **avere**: avrei, avresti, avrebbe, avremmo, avreste, avrebbero
+- **volere**: **vorrei** (fondamentale!), vorresti, vorrebbe, vorremmo, vorreste, vorrebbero
+- **potere**: potrei, potresti, potrebbe, potremmo, potreste, potrebbero
+- **dovere**: dovrei, dovresti, dovrebbe, dovremmo, dovreste, dovrebbero
+- **andare**: andrei · **fare**: farei · **dare**: darei · **stare**: starei · **dire**: direi
+- **vedere**: vedrei · **sapere**: saprei · **venire**: verrei · **rimanere**: rimarrei`,
+  formationExamples: [
+    { it: 'Vorrei un cappuccino e una brioche, per favore.', en: 'I would like a cappuccino and a croissant, please.', verb: 'volere' },
+    { it: 'Parleresti più lentamente? Non capisco bene.', en: 'Would you speak more slowly? I don\'t understand well.', verb: 'parlare' },
+    { it: 'Mi piacerebbe imparare il francese.', en: 'I would like to learn French.', verb: 'piacere' },
+    { it: 'Pagherei volentieri io questa volta.', en: 'I would gladly pay this time.', verb: 'pagare' },
+    { it: 'Dovresti riposare di più, sembri stanco.', en: 'You should rest more, you look tired.', verb: 'dovere' },
+  ],
+  vocabulary: [
+    {
+      term: 'volere',
+      kind: 'verb',
+      english: 'to want (would like)',
+      exampleIt: 'Vorrei un\'informazione, per favore.',
+      exampleEn: 'I would like some information, please.',
+    },
+    {
+      term: 'potere',
+      kind: 'verb',
+      english: 'to be able / could',
+      exampleIt: 'Potrebbe ripetere, per favore? Non ho sentito.',
+      exampleEn: 'Could you repeat, please? I didn\'t hear.',
+    },
+    {
+      term: 'dovere',
+      kind: 'verb',
+      english: 'must / should',
+      exampleIt: 'Dovresti studiare di più per l\'esame.',
+      exampleEn: 'You should study more for the exam.',
+    },
+    {
+      term: 'piacere',
+      kind: 'verb',
+      english: 'to please / would like',
+      exampleIt: 'Mi piacerebbe andare in vacanza in Sicilia.',
+      exampleEn: 'I would like to go on holiday in Sicily.',
+    },
+    {
+      term: 'andare',
+      kind: 'verb',
+      english: 'to go',
+      exampleIt: 'Andrei volentieri al cinema stasera.',
+      exampleEn: 'I would gladly go to the cinema tonight.',
+    },
+    {
+      term: 'parlare',
+      kind: 'verb',
+      english: 'to speak / to talk',
+      exampleIt: 'Parlerei volentieri con il direttore.',
+      exampleEn: 'I would gladly speak with the director.',
+    },
+    {
+      term: 'mangiare',
+      kind: 'verb',
+      english: 'to eat',
+      exampleIt: 'Mangerei una pizza enorme adesso!',
+      exampleEn: 'I would eat a huge pizza right now!',
+    },
+    {
+      term: 'essere',
+      kind: 'verb',
+      english: 'to be',
+      exampleIt: 'Sarebbe bello viaggiare insieme.',
+      exampleEn: 'It would be nice to travel together.',
+    },
+    {
+      term: 'vorrei',
+      kind: 'term',
+      english: 'I would like',
+      exampleIt: 'Vorrei prenotare un tavolo per due, grazie.',
+      exampleEn: 'I would like to book a table for two, thanks.',
+    },
+    {
+      term: 'mi piacerebbe',
+      kind: 'term',
+      english: 'I would like (to)',
+      exampleIt: 'Mi piacerebbe vedere quel film con te.',
+      exampleEn: 'I would like to see that film with you.',
+    },
+    {
+      term: 'per favore',
+      kind: 'term',
+      english: 'please',
+      exampleIt: 'Mi aiuterebbe a portare le buste, per favore?',
+      exampleEn: 'Would you help me carry the bags, please?',
+    },
+    {
+      term: 'gentilmente',
+      kind: 'term',
+      english: 'kindly',
+      exampleIt: 'Potrebbe gentilmente firmare qui?',
+      exampleEn: 'Could you kindly sign here?',
+    },
+    {
+      term: 'magari',
+      kind: 'term',
+      english: 'maybe / hopefully',
+      exampleIt: 'Magari potremmo andare al mare il weekend!',
+      exampleEn: 'Maybe we could go to the seaside on the weekend!',
+    },
+    {
+      term: 'secondo me',
+      kind: 'term',
+      english: 'in my opinion',
+      exampleIt: 'Secondo me, dovresti accettare quel lavoro.',
+      exampleEn: 'In my opinion, you should accept that job.',
+    },
+  ],
+};
+
+// ---------------------------------------------------------------------------
 // IMPERATIVO
 // ---------------------------------------------------------------------------
 
@@ -779,6 +931,7 @@ export const TENSES: Record<TenseId, TenseDef> = {
   passato_composto: PASSATO_COMPOSTO,
   imperfetto: IMPERFETTO,
   futuro_semplice: FUTURO_SEMPLICE,
+  condizionale: CONDIZIONALE,
   imperativo: IMPERATIVO,
 };
 
