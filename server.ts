@@ -20,6 +20,7 @@ import { generateAudioForPendingAscolto, getAudioDir, isAudioGenEnabled } from '
 import { generateBatchAndPersist, maxBankSize } from './server/topup';
 import { fetchOrGenerate, warmupVerbTraining, type VerbTrainingRequest } from './server/verbTraining';
 import { TENSE_ORDER, type TenseId, type StepKind } from './src/data/verbTenses';
+import { shuffleQuestionOptions } from './src/data/questions';
 
 /**
  * Build a short few-shot block from real exam samples that match the
@@ -651,7 +652,7 @@ app.post('/api/verb-training/items', async (req: Request, res: Response) => {
       const db = getDb();
       const cached = db.fetchVerbTrainingItems(
         request.browserId, request.tense, request.step, request.count, request.redrillVerbs,
-      );
+      ).map(shuffleQuestionOptions);
       res.json({ success: true, items: cached, isFallback: cached.length < request.count });
       return;
     }
@@ -673,7 +674,7 @@ app.post('/api/verb-training/items', async (req: Request, res: Response) => {
     try {
       const cached = getDb().fetchVerbTrainingItems(
         request.browserId, request.tense, request.step, request.count, request.redrillVerbs,
-      );
+      ).map(shuffleQuestionOptions);
       res.json({ success: true, items: cached, isFallback: true });
     } catch (cacheErr: any) {
       res.status(500).json({ success: false, error: error?.message || cacheErr?.message });

@@ -21,6 +21,7 @@ import { type GoogleGenAI, Type } from '@google/genai';
 import { getDb } from './db';
 import type { Question } from '../src/types';
 import { rulesPromptBlock, type TenseId, type StepKind } from '../src/data/verbTenses';
+import { shuffleQuestionOptions } from '../src/data/questions';
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -555,7 +556,11 @@ async function generateAndPersistBatch(
       dropped++;
       continue;
     }
-    questions.push({
+    // Gemini tends to emit the correct option first (especially for vocab/recognize
+    // steps where it generates the answer and then fills distractors), making the
+    // drills trivial. Randomize each item's option order before persisting; the
+    // shuffle keeps the correctAnswerIndex in sync.
+    questions.push(shuffleQuestionOptions({
       id: makeId(tense, step),
       category: 'TempiVerbali',
       section: sectionKey,
@@ -565,7 +570,7 @@ async function generateAndPersistBatch(
       explanation: String(item.explanation).trim(),
       difficulty: 'A2',
       verbInfinitive: String(item.verbInfinitive).trim().toLowerCase(),
-    });
+    }));
   }
 
   if (dropped > 0) {
@@ -623,11 +628,17 @@ export async function fetchOrGenerate(
   const { browserId, tense, step, count, redrillVerbs } = req;
   const db = getDb();
 
+  // Re-shuffle option order per session: cached items keep their stored layout
+  // forever otherwise, and items generated before this fix have the correct
+  // answer at index 0 (Gemini bias). Also gives genuine variety on the rare
+  // case the user sees the same item twice.
+  const reshuffle = (qs: Question[]): Question[] => qs.map(shuffleQuestionOptions);
+
   // First attempt: serve from cache, biased away from recently-seen items
   // for this browser, with optional redrill weighting.
   let items = db.fetchVerbTrainingItems(browserId, tense, step, count, redrillVerbs);
   if (items.length >= count) {
-    return { items: items.slice(0, count) };
+    return { items: reshuffle(items.slice(0, count)) };
   }
 
   // Short — synchronously generate at least MIN_SYNC_BATCH new items.
@@ -637,7 +648,7 @@ export async function fetchOrGenerate(
   if (generated.length === 0) {
     // Gemini unavailable. Return whatever the cache had; mark as fallback so
     // the client can show a soft warning if it wants.
-    return { items, isFallback: true };
+    return { items: reshuffle(items), isFallback: true };
   }
 
   // Re-fetch from the DB so the response goes through the same shape (with
@@ -650,10 +661,10 @@ export async function fetchOrGenerate(
     // Pathological: DB fetch returned nothing even after a successful
     // insert. Fall back to the generated batch directly so the user gets
     // something usable.
-    return { items: generated.slice(0, count) };
+    return { items: reshuffle(generated.slice(0, count)) };
   }
 
-  return { items: items.slice(0, count) };
+  return { items: reshuffle(items.slice(0, count)) };
 }
 
 /**
