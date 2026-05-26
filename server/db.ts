@@ -165,6 +165,17 @@ export class AppDb {
       this.db.run(`ALTER TABLE questions ADD COLUMN verb_infinitive TEXT`);
       this.db.run(`CREATE INDEX IF NOT EXISTS idx_questions_verb_training ON questions(category, section, is_disabled)`);
     }
+    // Soft-disable verb-training items for tenses that were removed from the
+    // training path (trapassato_prossimo and futuro_anteriore — both demoted
+    // for being out of A2 scope). Rows stay for audit; `is_disabled = 1` is
+    // sticky so this is idempotent across reboots.
+    this.db.run(`
+      UPDATE questions
+         SET is_disabled = 1
+       WHERE category = 'TempiVerbali'
+         AND is_disabled = 0
+         AND (section LIKE 'trapassato_prossimo:%' OR section LIKE 'futuro_anteriore:%')
+    `);
     // Backfill prefettura_section from category for any rows missing it.
     this.db.run(`
       UPDATE questions

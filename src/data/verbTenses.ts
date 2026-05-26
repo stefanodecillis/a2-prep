@@ -4,9 +4,8 @@ export type TenseId =
   | 'presente'
   | 'passato_composto'
   | 'imperfetto'
-  | 'trapassato_prossimo'
   | 'futuro_semplice'
-  | 'futuro_anteriore';
+  | 'imperativo';
 
 /**
  * Item kinds used by the training UI:
@@ -22,9 +21,8 @@ export const TENSE_ORDER: TenseId[] = [
   'presente',
   'passato_composto',
   'imperfetto',
-  'trapassato_prossimo',
   'futuro_semplice',
-  'futuro_anteriore',
+  'imperativo',
 ] as const;
 
 export interface VocabCard {
@@ -475,151 +473,6 @@ L'imperfetto è quasi sempre regolare: bastano le desinenze giuste.
 };
 
 // ---------------------------------------------------------------------------
-// TRAPASSATO PROSSIMO
-// ---------------------------------------------------------------------------
-
-const TRAPASSATO_PROSSIMO: TenseDef = {
-  id: 'trapassato_prossimo',
-  labelIt: 'Trapassato Prossimo',
-  labelEn: 'Past Perfect (Pluperfect)',
-  isCompound: true,
-  auxiliaryTenseId: 'imperfetto',
-  rules: `Il **trapassato prossimo** indica un'azione del passato avvenuta **prima** di un'altra azione del passato: *Quando sono arrivato, Maria era già uscita.*
-
-Si usa spesso insieme al **passato prossimo** o all'**imperfetto** per dire quale azione è successa per prima.
-
-**Formazione:** **ausiliare all'imperfetto** (essere o avere) + **participio passato** del verbo principale.
-
-**Ausiliare all'imperfetto:**
-- **avere**: avevo, avevi, aveva, avevamo, avevate, avevano
-- **essere**: ero, eri, era, eravamo, eravate, erano
-
-**Scelta dell'ausiliare:** segue le stesse regole del passato prossimo.
-- **avere** con i verbi transitivi: *Avevo già mangiato quando è arrivato Marco.*
-- **essere** con i verbi di movimento, di stato e con i riflessivi: *Eravamo già partiti. Mi ero già lavato i denti.*
-
-**Accordo del participio:**
-- Con **essere**, il participio concorda con il soggetto in **genere e numero**: *Anna era andat**a**. Le ragazze erano uscit**e**.*
-- Con **avere**, il participio resta in **-o**: *Avevamo finit**o** i compiti.*
-
-**Participi passati regolari:** -are → -ato, -ere → -uto, -ire → -ito.
-**Irregolari frequenti:** stato, fatto, detto, preso, letto, scritto, visto, venuto, aperto, chiuso, bevuto, messo.
-
-**Esempi tipici:**
-- *Quando sono arrivata a casa, mio marito aveva già preparato la cena.*
-- *Non avevo mai visto un film così bello prima di ieri.*
-- *Marco era stanco perché aveva lavorato tutto il giorno.*`,
-  formationExamples: [
-    { it: 'Quando sei arrivato, io avevo già parlato con il direttore.', en: 'When you arrived, I had already spoken with the director.', verb: 'parlare' },
-    { it: 'Avevamo preso il treno sbagliato e siamo tornati indietro.', en: 'We had taken the wrong train and we went back.', verb: 'prendere' },
-    { it: 'Non avevo mai dormito così male in vita mia.', en: 'I had never slept so badly in my life.', verb: 'dormire' },
-    { it: 'Quando sono uscita, Luca era già andato via.', en: 'When I went out, Luca had already left.', verb: 'andare' },
-    { it: 'I bambini erano stanchi perché avevano fatto sport tutto il giorno.', en: 'The children were tired because they had done sports all day.', verb: 'fare' },
-    { it: 'Maria era partita due ore prima di me.', en: 'Maria had left two hours before me.', verb: 'partire' },
-  ],
-  vocabulary: [
-    {
-      term: 'finire',
-      kind: 'verb',
-      english: 'to finish',
-      exampleIt: 'Quando è suonato il telefono, avevo già finito di mangiare.',
-      exampleEn: 'When the phone rang, I had already finished eating.',
-    },
-    {
-      term: 'mangiare',
-      kind: 'verb',
-      english: 'to eat',
-      exampleIt: 'Non avevo fame perché avevo mangiato un panino al bar.',
-      exampleEn: 'I wasn\'t hungry because I had eaten a sandwich at the bar.',
-    },
-    {
-      term: 'uscire',
-      kind: 'verb',
-      english: 'to go out',
-      exampleIt: 'Quando sono arrivata, i miei amici erano già usciti.',
-      exampleEn: 'When I arrived, my friends had already gone out.',
-    },
-    {
-      term: 'arrivare',
-      kind: 'verb',
-      english: 'to arrive',
-      exampleIt: 'Il treno era arrivato in orario, ma noi eravamo in ritardo.',
-      exampleEn: 'The train had arrived on time, but we were late.',
-    },
-    {
-      term: 'dimenticare',
-      kind: 'verb',
-      english: 'to forget',
-      exampleIt: 'Sono tornato a casa perché avevo dimenticato le chiavi.',
-      exampleEn: 'I went back home because I had forgotten the keys.',
-    },
-    {
-      term: 'studiare',
-      kind: 'verb',
-      english: 'to study',
-      exampleIt: 'Anna ha preso un bel voto perché aveva studiato molto.',
-      exampleEn: 'Anna got a good grade because she had studied a lot.',
-    },
-    {
-      term: 'vedere',
-      kind: 'verb',
-      english: 'to see',
-      exampleIt: 'Non avevo mai visto la neve prima di andare in montagna.',
-      exampleEn: 'I had never seen snow before going to the mountains.',
-    },
-    {
-      term: 'prenotare',
-      kind: 'verb',
-      english: 'to book',
-      exampleIt: 'Per fortuna avevamo prenotato il ristorante in anticipo.',
-      exampleEn: 'Luckily we had booked the restaurant in advance.',
-    },
-    {
-      term: 'prima',
-      kind: 'term',
-      english: 'before / earlier',
-      exampleIt: 'Avevo preparato la valigia il giorno prima della partenza.',
-      exampleEn: 'I had packed the suitcase the day before the departure.',
-    },
-    {
-      term: 'già',
-      kind: 'term',
-      english: 'already',
-      exampleIt: 'Quando sei entrato, avevamo già iniziato la riunione.',
-      exampleEn: 'When you came in, we had already started the meeting.',
-    },
-    {
-      term: 'non ancora',
-      kind: 'term',
-      english: 'not yet',
-      exampleIt: 'A mezzogiorno non avevo ancora ricevuto la sua e-mail.',
-      exampleEn: 'At noon I had not yet received his email.',
-    },
-    {
-      term: 'mai',
-      kind: 'term',
-      english: 'never / ever',
-      exampleIt: 'Non avevo mai mangiato il sushi prima di quel giorno.',
-      exampleEn: 'I had never eaten sushi before that day.',
-    },
-    {
-      term: 'appena',
-      kind: 'term',
-      english: 'just',
-      exampleIt: 'Eravamo appena tornati a casa quando è iniziato il temporale.',
-      exampleEn: 'We had just returned home when the storm started.',
-    },
-    {
-      term: 'dopo che',
-      kind: 'term',
-      english: 'after (that)',
-      exampleIt: 'Dopo che aveva finito di lavorare, è andato in palestra.',
-      exampleEn: 'After he had finished work, he went to the gym.',
-    },
-  ],
-};
-
-// ---------------------------------------------------------------------------
 // FUTURO SEMPLICE
 // ---------------------------------------------------------------------------
 
@@ -768,145 +621,151 @@ I verbi in **-care/-gare** (cercare, pagare) aggiungono **h** per mantenere il s
 };
 
 // ---------------------------------------------------------------------------
-// FUTURO ANTERIORE
+// IMPERATIVO
 // ---------------------------------------------------------------------------
 
-const FUTURO_ANTERIORE: TenseDef = {
-  id: 'futuro_anteriore',
-  labelIt: 'Futuro Anteriore',
-  labelEn: 'Future Perfect',
-  isCompound: true,
-  auxiliaryTenseId: 'futuro_semplice',
-  rules: `Il **futuro anteriore** indica un'azione del futuro che sarà **già finita** prima di un'altra azione futura: *Quando arriverai, avrò già preparato la cena.*
+const IMPERATIVO: TenseDef = {
+  id: 'imperativo',
+  labelIt: 'Imperativo',
+  labelEn: 'Imperative Mood',
+  isCompound: false,
+  rules: `L'**imperativo** si usa per dare **ordini**, **consigli**, **istruzioni**, **divieti** e **richieste cortesi**. È fondamentale nella vita di tutti i giorni: a scuola, al lavoro, al ristorante, in negozio.
 
 **Quando si usa:**
-- Azione futura conclusa prima di un'altra azione futura, di solito con **quando**, **appena**, **dopo che**: *Appena avrò finito di lavorare, ti chiamerò.*
-- Supposizioni sul passato recente: *Dov'è Maria? Sarà uscita con i suoi amici.* (= Penso che sia uscita.)
+- Ordini diretti: *Marco, **parla** più forte!*
+- Consigli e suggerimenti: ***Prendi** l'ombrello, piove!*
+- Istruzioni: ***Premi** il pulsante verde.*
+- Cortesia con "Lei" (forme di rispetto): *Signora, **mi scusi**! ***Prenda** un caffè, prego.*
+- Divieti (con "non"): ***Non parlare** ad alta voce!*
+- Esortazioni: ***Andiamo** a mangiare qualcosa!*
 
-**Formazione:** **ausiliare al futuro semplice** (essere o avere) + **participio passato**.
+**Le quattro forme A2:** **tu** (informale), **Lei** (formale), **noi** (esortazione), **voi** (gruppo).
 
-**Ausiliare al futuro:**
-- **avere**: avrò, avrai, avrà, avremo, avrete, avranno
-- **essere**: sarò, sarai, sarà, saremo, sarete, saranno
+**Formazione regolare (positivo):**
+- **-are** (parlare): **parla** (tu) · **parli** (Lei) · **parliamo** (noi) · **parlate** (voi)
+- **-ere** (prendere): **prendi** · **prenda** · **prendiamo** · **prendete**
+- **-ire** (dormire): **dormi** · **dorma** · **dormiamo** · **dormite**
+- **-ire** -isc- (finire): **finisci** · **finisca** · **finiamo** · **finite**
 
-**Scelta dell'ausiliare:** segue le stesse regole del passato prossimo e del trapassato.
-- **avere** con i verbi transitivi: *Avrò finito il libro per domenica.*
-- **essere** con i verbi di movimento, di stato e con i riflessivi: *Saremo arrivati per le otto. Mi sarò già svegliato quando suonerà la sveglia.*
+**Negativo (regola importante!):**
+- Con **tu**: **non + infinito** → ***Non parlare!*** *Non correre!* *Non aprire la porta!*
+- Con **Lei**, **noi**, **voi**: **non + imperativo** → *Non parli! Non parliamo! Non parlate!*
 
-**Accordo del participio:**
-- Con **essere**, il participio concorda con il soggetto in **genere e numero**: *Maria sarà tornat**a**. I ragazzi saranno usciti.*
-- Con **avere**, il participio resta in **-o**: *Avremo mangiat**o** prima delle otto.*
+**Irregolari principali:**
+- **essere**: **sii** · **sia** · siamo · siate
+- **avere**: **abbi** · **abbia** · abbiamo · abbiate
+- **fare**: **fai** (o **fa'**) · **faccia** · facciamo · fate
+- **andare**: **vai** (o **va'**) · **vada** · andiamo · andate
+- **dare**: **dai** (o **da'**) · **dia** · diamo · date
+- **dire**: **di'** · **dica** · diciamo · dite
+- **stare**: **stai** (o **sta'**) · **stia** · stiamo · state
 
-**Participi regolari:** -are → -ato, -ere → -uto, -ire → -ito.
-**Irregolari frequenti:** stato, fatto, detto, preso, visto, scritto, letto, venuto, aperto, chiuso, bevuto, messo.
-
-All'A2 il futuro anteriore appare soprattutto con **quando**, **appena**, **dopo che** per dire l'ordine di due azioni future.`,
+**Pronomi con l'imperativo:** all'A2, con **tu/noi/voi** i pronomi si attaccano al verbo (*dimmi*, *aspettami*, *scusami*); con **Lei** restano separati e prima del verbo (*mi dica*, *mi aspetti*, *mi scusi*).`,
   formationExamples: [
-    { it: 'Quando arriverai, avrò già parlato con il direttore.', en: 'When you arrive, I will have already spoken with the director.', verb: 'parlare' },
-    { it: 'Appena avremo preso la patente, compreremo una macchina.', en: 'As soon as we have got our driving licence, we will buy a car.', verb: 'prendere' },
-    { it: 'Dopo che avrò dormito un po\', mi sentirò meglio.', en: 'After I have slept a bit, I will feel better.', verb: 'dormire' },
-    { it: 'Per le sette Maria sarà già andata via.', en: 'By seven, Maria will have already left.', verb: 'andare' },
-    { it: 'Quando finiremo, avremo fatto tutti i compiti.', en: 'When we finish, we will have done all our homework.', verb: 'fare' },
-    { it: 'Sarò tornata a casa prima delle dieci di sera.', en: 'I will have come back home before ten in the evening.', verb: 'tornare' },
+    { it: 'Marco, parla più lentamente, per favore!', en: 'Marco, speak more slowly, please!', verb: 'parlare' },
+    { it: 'Signora, prenda pure una sedia.', en: 'Ma\'am, please take a chair.', verb: 'prendere' },
+    { it: 'Ragazzi, finite i compiti prima di cena!', en: 'Kids, finish your homework before dinner!', verb: 'finire' },
+    { it: 'Andiamo al cinema stasera!', en: 'Let\'s go to the cinema tonight!', verb: 'andare' },
+    { it: 'Non aprire quella porta!', en: 'Don\'t open that door!', verb: 'aprire' },
   ],
   vocabulary: [
     {
-      term: 'finire',
+      term: 'venire',
       kind: 'verb',
-      english: 'to finish',
-      exampleIt: 'Quando avrò finito di studiare, ti chiamerò.',
-      exampleEn: 'When I have finished studying, I will call you.',
+      english: 'to come',
+      exampleIt: 'Vieni qui un momento, per favore!',
+      exampleEn: 'Come here for a moment, please!',
     },
     {
-      term: 'arrivare',
+      term: 'aspettare',
       kind: 'verb',
-      english: 'to arrive',
-      exampleIt: 'Per mezzogiorno saremo arrivati a Bologna.',
-      exampleEn: 'By midday we will have arrived in Bologna.',
+      english: 'to wait',
+      exampleIt: 'Aspetta un attimo, arrivo subito.',
+      exampleEn: 'Wait a moment, I\'m coming right away.',
     },
     {
-      term: 'preparare',
+      term: 'ascoltare',
       kind: 'verb',
-      english: 'to prepare',
-      exampleIt: 'Quando torneremo a casa, mia madre avrà preparato la cena.',
-      exampleEn: 'When we return home, my mother will have prepared dinner.',
+      english: 'to listen',
+      exampleIt: 'Ascoltami bene, è importante.',
+      exampleEn: 'Listen to me carefully, it\'s important.',
     },
     {
-      term: 'partire',
+      term: 'prendere',
       kind: 'verb',
-      english: 'to leave (depart)',
-      exampleIt: 'Alle otto saranno già partiti per l\'aeroporto.',
-      exampleEn: 'By eight they will have already left for the airport.',
+      english: 'to take',
+      exampleIt: 'Prendi l\'autobus numero 23 per il centro.',
+      exampleEn: 'Take bus number 23 for the city centre.',
     },
     {
-      term: 'mangiare',
+      term: 'dire',
       kind: 'verb',
-      english: 'to eat',
-      exampleIt: 'Quando arriverete, avremo già mangiato.',
-      exampleEn: 'When you arrive, we will have already eaten.',
+      english: 'to say / to tell',
+      exampleIt: 'Dimmi la verità, per favore.',
+      exampleEn: 'Tell me the truth, please.',
     },
     {
-      term: 'tornare',
+      term: 'stare',
       kind: 'verb',
-      english: 'to return',
-      exampleIt: 'Per le dieci sarò tornato a casa di sicuro.',
-      exampleEn: 'I will surely be back home by ten.',
+      english: 'to stay / to be (state)',
+      exampleIt: 'Sta\' tranquillo, tutto va bene.',
+      exampleEn: 'Stay calm, everything is fine.',
     },
     {
-      term: 'leggere',
+      term: 'andare',
       kind: 'verb',
-      english: 'to read',
-      exampleIt: 'Entro venerdì avrò letto tutto il libro.',
-      exampleEn: 'By Friday I will have read the whole book.',
+      english: 'to go',
+      exampleIt: 'Va\' a casa e riposati un po\'.',
+      exampleEn: 'Go home and rest a little.',
     },
     {
-      term: 'scrivere',
+      term: 'fare',
       kind: 'verb',
-      english: 'to write',
-      exampleIt: 'Dopo che avrò scritto l\'e-mail, andrò a dormire.',
-      exampleEn: 'After I have written the email, I will go to sleep.',
+      english: 'to do / to make',
+      exampleIt: 'Fai attenzione quando attraversi la strada!',
+      exampleEn: 'Be careful when you cross the street!',
     },
     {
-      term: 'quando',
+      term: 'per favore',
       kind: 'term',
-      english: 'when',
-      exampleIt: 'Quando saremo tornati, andremo a fare la spesa.',
-      exampleEn: 'When we have come back, we will go grocery shopping.',
+      english: 'please',
+      exampleIt: 'Aspetta un momento, per favore.',
+      exampleEn: 'Wait a moment, please.',
     },
     {
-      term: 'appena',
+      term: 'subito',
       kind: 'term',
-      english: 'as soon as',
-      exampleIt: 'Appena avrò finito il lavoro, verrò da te.',
-      exampleEn: 'As soon as I have finished work, I will come to you.',
+      english: 'right away / immediately',
+      exampleIt: 'Vieni qui subito!',
+      exampleEn: 'Come here right away!',
     },
     {
-      term: 'dopo che',
+      term: 'attenzione',
       kind: 'term',
-      english: 'after (that)',
-      exampleIt: 'Dopo che avranno cenato, guarderanno un film.',
-      exampleEn: 'After they have had dinner, they will watch a film.',
+      english: 'attention / careful',
+      exampleIt: 'Attenzione al gradino, signora!',
+      exampleEn: 'Watch the step, ma\'am!',
     },
     {
-      term: 'entro',
+      term: 'forza!',
       kind: 'term',
-      english: 'by / within',
-      exampleIt: 'Entro lunedì avremo consegnato il progetto.',
-      exampleEn: 'By Monday we will have delivered the project.',
+      english: 'come on! / go on!',
+      exampleIt: 'Forza, possiamo farcela!',
+      exampleEn: 'Come on, we can do it!',
     },
     {
-      term: 'per le otto',
+      term: 'dai!',
       kind: 'term',
-      english: 'by eight (o\'clock)',
-      exampleIt: 'Per le otto saranno arrivati tutti gli ospiti.',
-      exampleEn: 'By eight all the guests will have arrived.',
+      english: 'come on! (informal)',
+      exampleIt: 'Dai, andiamo, siamo in ritardo!',
+      exampleEn: 'Come on, let\'s go, we\'re late!',
     },
     {
-      term: 'prima di',
+      term: 'non ti preoccupare',
       kind: 'term',
-      english: 'before',
-      exampleIt: 'Prima di partire, avrò controllato la valigia.',
-      exampleEn: 'Before leaving, I will have checked the suitcase.',
+      english: 'don\'t worry',
+      exampleIt: 'Non ti preoccupare, è tutto a posto.',
+      exampleEn: 'Don\'t worry, everything is fine.',
     },
   ],
 };
@@ -919,9 +778,8 @@ export const TENSES: Record<TenseId, TenseDef> = {
   presente: PRESENTE,
   passato_composto: PASSATO_COMPOSTO,
   imperfetto: IMPERFETTO,
-  trapassato_prossimo: TRAPASSATO_PROSSIMO,
   futuro_semplice: FUTURO_SEMPLICE,
-  futuro_anteriore: FUTURO_ANTERIORE,
+  imperativo: IMPERATIVO,
 };
 
 /**

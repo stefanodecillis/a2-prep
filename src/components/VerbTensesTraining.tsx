@@ -86,7 +86,7 @@ interface GrandReport {
 }
 
 interface PersistedProgress {
-  schemaVersion: 1;
+  schemaVersion: 2;
   completedTenses: TenseId[];
   currentTense: TenseId | null;
   currentStep: 1 | 2 | 3 | 4 | 5 | 6 | null;
@@ -112,7 +112,7 @@ interface Props {
 // Constants
 // ============================================================================
 
-const STORAGE_KEY = 'a2prep:verbTrainingProgress:v1';
+const STORAGE_KEY = 'a2prep:verbTrainingProgress:v2';
 const PASS_THRESHOLD = 0.7;
 const MAX_REDRILL_ATTEMPTS = 3;
 
@@ -159,7 +159,7 @@ function loadProgress(): PersistedProgress | null {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as PersistedProgress;
-    if (!parsed || parsed.schemaVersion !== 1) return null;
+    if (!parsed || parsed.schemaVersion !== 2) return null;
     if (!Array.isArray(parsed.completedTenses)) return null;
     if (!parsed.tenseResults || typeof parsed.tenseResults !== 'object') return null;
     return parsed;
@@ -438,7 +438,7 @@ export function VerbTensesTraining({ onExit }: Props): React.ReactElement {
       }
 
       const payload: PersistedProgress = {
-        schemaVersion: 1,
+        schemaVersion: 2,
         completedTenses,
         currentTense,
         currentStep,

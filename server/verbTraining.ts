@@ -234,8 +234,11 @@ export function expectedRegularEnding(
 
   // Compound tenses use auxiliary + participle; ending-of-form is the
   // participle agreement, which depends on aux choice and gender. Too
-  // ambiguous to enforce here.
-  if (tense === 'passato_prossimo' || tense === 'trapassato_prossimo' || tense.includes('composto')) {
+  // ambiguous to enforce here. Imperativo uses endings that differ from
+  // the present-indicative pattern this helper predicts (e.g. -are tu = -a,
+  // not -i; negative tu = non + infinitive), so skip it too rather than
+  // false-reject valid items.
+  if (tense.includes('composto') || tense === 'imperativo') {
     return null;
   }
 
