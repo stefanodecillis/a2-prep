@@ -56,6 +56,7 @@ const SCHEMA_STATEMENTS: string[] = [
     mode_hint TEXT NOT NULL DEFAULT 'both',
     category TEXT NOT NULL,
     section TEXT,
+    prefettura_section TEXT,
     question_text TEXT NOT NULL,
     question_text_norm TEXT NOT NULL UNIQUE,
     options_json TEXT NOT NULL,
@@ -63,14 +64,18 @@ const SCHEMA_STATEMENTS: string[] = [
     explanation TEXT NOT NULL,
     context TEXT,
     image_url TEXT,
+    audio_url TEXT,
     option_images_json TEXT,
     source TEXT NOT NULL,
     flagged_count INTEGER NOT NULL DEFAULT 0,
     is_disabled INTEGER NOT NULL DEFAULT 0,
+    verb_infinitive TEXT,
     created_at INTEGER NOT NULL
   )`,
+  `CREATE INDEX IF NOT EXISTS idx_questions_verb_training ON questions(category, section, is_disabled)`,
   `CREATE INDEX IF NOT EXISTS idx_questions_exam_type ON questions(exam_type, is_disabled)`,
   `CREATE INDEX IF NOT EXISTS idx_questions_source ON questions(source)`,
+  `CREATE INDEX IF NOT EXISTS idx_questions_prefettura_section ON questions(prefettura_section, is_disabled)`,
   `CREATE TABLE IF NOT EXISTS explanations (
     question_id TEXT NOT NULL,
     selected_index INTEGER NOT NULL,
@@ -107,6 +112,20 @@ function inferExamType(q: Question): string {
   return 'qcer_general';
 }
 
+/**
+ * Map a question's category to the Prefettura 3-section model
+ * (Ascolto · Lettura · Scrittura). Returns null when the item doesn't fit any
+ * Prefettura section (e.g. standalone Grammatica or Vocabolario drills), in
+ * which case it's excluded from Simulazione Prefettura while still being usable
+ * in Pratica.
+ */
+export function inferPrefetturaSection(q: Question): 'ascolto' | 'lettura' | 'scrittura' | null {
+  const category = (q.category || '').toLowerCase();
+  if (category === 'ascolto') return 'ascolto';
+  if (category === 'lettura' || category === 'situazioni') return 'lettura';
+  return null;
+}
+
 export class AppDb {
   readonly db: Database;
   private readonly insertQuestion: ReturnType<Database['prepare']>;
@@ -116,6 +135,7 @@ export class AppDb {
   private readonly autoDisableIfThreshold: ReturnType<Database['prepare']>;
   private readonly upsertExplanation: ReturnType<Database['prepare']>;
   private readonly getExplanationStmt: ReturnType<Database['prepare']>;
+  private readonly updateAudioUrlStmt: ReturnType<Database['prepare']>;
 
   constructor(dbPath: string) {
     const dir = path.dirname(dbPath);
@@ -127,12 +147,42 @@ export class AppDb {
     this.db.run('PRAGMA foreign_keys = ON');
     for (const stmt of SCHEMA_STATEMENTS) this.db.run(stmt);
 
+    // Idempotent migrations: add columns if upgrading an older DB.
+    const cols = this.db.prepare(`PRAGMA table_info(questions)`).all() as { name: string }[];
+    const hasPrefetturaSection = cols.some(c => c.name === 'prefettura_section');
+    if (!hasPrefetturaSection) {
+      this.db.run(`ALTER TABLE questions ADD COLUMN prefettura_section TEXT`);
+      this.db.run(`CREATE INDEX IF NOT EXISTS idx_questions_prefettura_section ON questions(prefettura_section, is_disabled)`);
+    }
+    const hasAudioUrl = cols.some(c => c.name === 'audio_url');
+    if (!hasAudioUrl) {
+      this.db.run(`ALTER TABLE questions ADD COLUMN audio_url TEXT`);
+    }
+    const hasVerbInfinitive = cols.some(c => c.name === 'verb_infinitive');
+    if (!hasVerbInfinitive) {
+      this.db.run(`ALTER TABLE questions ADD COLUMN verb_infinitive TEXT`);
+      this.db.run(`CREATE INDEX IF NOT EXISTS idx_questions_verb_training ON questions(category, section, is_disabled)`);
+    }
+    // Backfill prefettura_section from category for any rows missing it.
+    this.db.run(`
+      UPDATE questions
+      SET prefettura_section = CASE
+        WHEN LOWER(category) = 'ascolto' THEN 'ascolto'
+        WHEN LOWER(category) IN ('lettura', 'situazioni') THEN 'lettura'
+        ELSE NULL
+      END
+      WHERE prefettura_section IS NULL
+    `);
+
     this.insertQuestion = this.db.prepare(`
       INSERT OR IGNORE INTO questions
-        (id, exam_type, mode_hint, category, section, question_text, question_text_norm,
+        (id, exam_type, mode_hint, category, section, prefettura_section, question_text, question_text_norm,
          options_json, correct_index, explanation, context, image_url, option_images_json,
-         source, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         source, verb_infinitive, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    this.updateAudioUrlStmt = this.db.prepare(`
+      UPDATE questions SET audio_url = ? WHERE id = ?
     `);
     this.insertSeen = this.db.prepare(`
       INSERT INTO seen_questions (browser_id, question_id, seen_at)
@@ -184,6 +234,7 @@ export class AppDb {
           'both',
           q.category ?? 'Generale',
           q.section ?? null,
+          inferPrefetturaSection(q),
           q.questionText,
           normalizeText(q.questionText),
           JSON.stringify(q.options),
@@ -193,6 +244,7 @@ export class AppDb {
           q.imageUrl ?? null,
           q.optionImages ? JSON.stringify(q.optionImages) : null,
           source,
+          q.verbInfinitive ?? null,
           now,
         );
         if (result.changes > 0) inserted++;
@@ -226,14 +278,14 @@ export class AppDb {
 
     const examFilter = examType === 'all' ? null : examType;
     const rows = (examFilter
-      ? this.db.prepare(`SELECT * FROM questions WHERE is_disabled = 0 AND exam_type = ?`).all(examFilter)
-      : this.db.prepare(`SELECT * FROM questions WHERE is_disabled = 0`).all()
+      ? this.db.prepare(`SELECT * FROM questions WHERE is_disabled = 0 AND exam_type = ? AND category != 'TempiVerbali'`).all(examFilter)
+      : this.db.prepare(`SELECT * FROM questions WHERE is_disabled = 0 AND category != 'TempiVerbali'`).all()
     ) as any[];
 
     let pool = rows.filter(r => !excludeIds.has(r.id));
 
     if (pool.length < count && examFilter) {
-      const allRows = this.db.prepare(`SELECT * FROM questions WHERE is_disabled = 0`).all() as any[];
+      const allRows = this.db.prepare(`SELECT * FROM questions WHERE is_disabled = 0 AND category != 'TempiVerbali'`).all() as any[];
       const allAvailable = allRows.filter(r => !excludeIds.has(r.id));
       const have = new Set(pool.map(r => r.id));
       for (const r of allAvailable) if (!have.has(r.id)) pool.push(r);
@@ -259,6 +311,166 @@ export class AppDb {
   }
 
   /**
+   * Pick up to `count` enabled questions for a specific Prefettura section
+   * (ascolto | lettura), excluding recently-seen items per the standard window.
+   * Mirrors `fetchQuestionsForBrowser` but section-scoped. Used by the
+   * Simulazione Prefettura flow which needs 10 Ascolto + 10 Lettura items.
+   */
+  fetchQuestionsForPrefetturaSection(
+    browserId: string,
+    section: 'ascolto' | 'lettura',
+    count: number,
+  ): DbQuestion[] {
+    const sinceMs = Date.now() - SEEN_WINDOW_DAYS * 24 * 3600 * 1000;
+
+    const seenRows = this.db.prepare(
+      `SELECT question_id FROM seen_questions
+         WHERE browser_id = ? AND seen_at >= ?
+         ORDER BY seen_at DESC LIMIT ?`
+    ).all(browserId, sinceMs, SEEN_EXCLUDE_CAP) as { question_id: string }[];
+    const excludeIds = new Set(seenRows.map(r => r.question_id));
+
+    const rows = this.db.prepare(
+      `SELECT * FROM questions WHERE is_disabled = 0 AND prefettura_section = ?`
+    ).all(section) as any[];
+
+    let pool = rows.filter(r => !excludeIds.has(r.id));
+    // If exclusion leaves us short, recycle from the section bank.
+    if (pool.length < count) pool = rows;
+
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    const picked = pool.slice(0, count);
+
+    const now = Date.now();
+    const tx = this.db.transaction((items: any[]) => {
+      for (const r of items) this.insertSeen.run(browserId, r.id, now);
+    });
+    tx(picked);
+
+    return picked.map(rowToQuestion);
+  }
+
+  /**
+   * Pick up to `count` enabled verb-training items for a given tense + step,
+   * excluding ones this browser has seen recently. Mirrors `fetchQuestionsForBrowser`
+   * but scoped to category='TempiVerbali' and section='<tense>:<step>'.
+   * Optional redrillInfinitives bias: prefer items whose verb_infinitive is in that set.
+   */
+  fetchVerbTrainingItems(
+    browserId: string,
+    tense: string,
+    stepKind: string,
+    count: number,
+    redrillInfinitives?: string[],
+  ): DbQuestion[] {
+    const sinceMs = Date.now() - SEEN_WINDOW_DAYS * 24 * 3600 * 1000;
+    const sectionKey = `${tense}:${stepKind}`;
+
+    const seenRows = this.db.prepare(
+      `SELECT question_id FROM seen_questions
+         WHERE browser_id = ? AND seen_at >= ?
+         ORDER BY seen_at DESC LIMIT ?`
+    ).all(browserId, sinceMs, SEEN_EXCLUDE_CAP) as { question_id: string }[];
+    const excludeIds = new Set(seenRows.map(r => r.question_id));
+
+    const rows = this.db.prepare(
+      `SELECT * FROM questions
+         WHERE is_disabled = 0 AND category = 'TempiVerbali' AND section = ?`
+    ).all(sectionKey) as any[];
+
+    let pool = rows.filter(r => !excludeIds.has(r.id));
+    if (pool.length < count) pool = rows; // recycle rather than return short
+
+    // Redrill bias: pull items matching the requested infinitives to the front.
+    if (redrillInfinitives && redrillInfinitives.length > 0) {
+      const wanted = new Set(redrillInfinitives.map(s => s.toLowerCase()));
+      pool.sort((a, b) => {
+        const aw = wanted.has((a.verb_infinitive || '').toLowerCase()) ? 0 : 1;
+        const bw = wanted.has((b.verb_infinitive || '').toLowerCase()) ? 0 : 1;
+        return aw - bw;
+      });
+    } else {
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+    }
+    const picked = pool.slice(0, count);
+
+    const now = Date.now();
+    const tx = this.db.transaction((items: any[]) => {
+      for (const r of items) this.insertSeen.run(browserId, r.id, now);
+    });
+    tx(picked);
+
+    return picked.map(rowToQuestion);
+  }
+
+  /** Count enabled verb-training items for a given tense+step. */
+  countVerbTrainingItems(tense: string, stepKind: string): number {
+    const sectionKey = `${tense}:${stepKind}`;
+    const row = this.db.prepare(
+      `SELECT COUNT(*) AS c FROM questions
+         WHERE is_disabled = 0 AND category = 'TempiVerbali' AND section = ?`
+    ).get(sectionKey) as { c: number };
+    return row.c;
+  }
+
+  /** Recent verb-training question texts for a given tense+step, to give the prompt a "don't repeat" hint. */
+  recentVerbTrainingTexts(tense: string, stepKind: string, limit: number): string[] {
+    const sectionKey = `${tense}:${stepKind}`;
+    const rows = this.db.prepare(
+      `SELECT question_text FROM questions
+         WHERE is_disabled = 0 AND category = 'TempiVerbali' AND section = ?
+         ORDER BY created_at DESC, rowid DESC LIMIT ?`
+    ).all(sectionKey, limit) as { question_text: string }[];
+    return rows.map(r => r.question_text);
+  }
+
+  /** Count enabled items in a given Prefettura section. Used to decide whether the bank can support a simulation. */
+  countByPrefetturaSection(section: 'ascolto' | 'lettura'): number {
+    const row = this.db.prepare(
+      `SELECT COUNT(*) AS c FROM questions WHERE is_disabled = 0 AND prefettura_section = ?`
+    ).get(section) as { c: number };
+    return row.c;
+  }
+
+  /**
+   * Find Ascolto questions that don't yet have a cached audio file.
+   * Used by the audio generation pipeline to top up the audio bank.
+   */
+  findAscoltoMissingAudio(limit: number): DbQuestion[] {
+    const rows = this.db.prepare(
+      `SELECT * FROM questions
+         WHERE is_disabled = 0
+           AND prefettura_section = 'ascolto'
+           AND (audio_url IS NULL OR audio_url = '')
+         ORDER BY created_at ASC
+         LIMIT ?`
+    ).all(limit) as any[];
+    return rows.map(rowToQuestion);
+  }
+
+  /** Count Ascolto items that still need audio generation. */
+  countAscoltoMissingAudio(): number {
+    const row = this.db.prepare(
+      `SELECT COUNT(*) AS c FROM questions
+         WHERE is_disabled = 0
+           AND prefettura_section = 'ascolto'
+           AND (audio_url IS NULL OR audio_url = '')`
+    ).get() as { c: number };
+    return row.c;
+  }
+
+  /** Attach a generated audio URL to an existing question (idempotent overwrite). */
+  setQuestionAudioUrl(questionId: string, audioUrl: string): void {
+    this.updateAudioUrlStmt.run(audioUrl, questionId);
+  }
+
+  /**
    * Count enabled questions that this browser has NOT seen recently. Mirrors
    * the exclusion logic of `fetchQuestionsForBrowser` so the top-up trigger
    * can decide based on what the user actually has left — not on raw bank
@@ -269,14 +481,14 @@ export class AppDb {
     const examFilter = examType === 'all' ? null : examType;
     const sql = examFilter
       ? `SELECT COUNT(*) AS c FROM questions
-           WHERE is_disabled = 0 AND exam_type = ?
+           WHERE is_disabled = 0 AND exam_type = ? AND category != 'TempiVerbali'
              AND id NOT IN (
                SELECT question_id FROM seen_questions
                  WHERE browser_id = ? AND seen_at >= ?
                  ORDER BY seen_at DESC LIMIT ?
              )`
       : `SELECT COUNT(*) AS c FROM questions
-           WHERE is_disabled = 0
+           WHERE is_disabled = 0 AND category != 'TempiVerbali'
              AND id NOT IN (
                SELECT question_id FROM seen_questions
                  WHERE browser_id = ? AND seen_at >= ?
@@ -300,12 +512,12 @@ export class AppDb {
     const rows = (examFilter
       ? this.db.prepare(
           `SELECT question_text FROM questions
-             WHERE is_disabled = 0 AND exam_type = ?
+             WHERE is_disabled = 0 AND exam_type = ? AND category != 'TempiVerbali'
              ORDER BY created_at DESC, rowid DESC LIMIT ?`
         ).all(examFilter, limit)
       : this.db.prepare(
           `SELECT question_text FROM questions
-             WHERE is_disabled = 0
+             WHERE is_disabled = 0 AND category != 'TempiVerbali'
              ORDER BY created_at DESC, rowid DESC LIMIT ?`
         ).all(limit)
     ) as { question_text: string }[];
@@ -381,6 +593,7 @@ function rowToQuestion(row: any): DbQuestion {
     id: row.id,
     category: row.category,
     section: row.section ?? '',
+    prefetturaSection: row.prefettura_section ?? undefined,
     questionText: row.question_text,
     options: JSON.parse(row.options_json),
     correctAnswerIndex: row.correct_index,
@@ -388,7 +601,9 @@ function rowToQuestion(row: any): DbQuestion {
     difficulty: 'A2',
     context: row.context ?? undefined,
     imageUrl: row.image_url ?? undefined,
+    audioUrl: row.audio_url ?? undefined,
     optionImages: row.option_images_json ? JSON.parse(row.option_images_json) : undefined,
+    verbInfinitive: row.verb_infinitive ?? undefined,
     source: row.source,
     flagged_count: row.flagged_count,
   };

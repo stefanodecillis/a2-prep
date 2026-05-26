@@ -12,3 +12,5 @@ coverage/
 !.env.example
 .vscode/
 .idea/
+# Playwright MCP browser-debug artifacts (screenshots, snapshots, console logs)
+.playwright-mcp/

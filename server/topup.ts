@@ -93,6 +93,20 @@ export async function generateBatchAndPersist(ai: GoogleGenAI, examType: string,
     ? `Bias the batch toward category "${weakest}" (currently underrepresented in the bank).`
     : '';
 
+  // Prefettura thematic bias: when growing the Lettura/Situazioni/Ascolto banks
+  // (the sections that feed the Simulazione Prefettura mode), nudge Gemini
+  // toward Italian public-service contexts that match the real exam's content
+  // domain — Anagrafe / Comune, Questura, ASL, INPS, Poste, locazione,
+  // condominio, contratto, scuola pubblica — rather than tourist / lifestyle
+  // scenarios (pizza, gondola, agriturismo) which the bank is already saturated
+  // in. Doesn't apply to Grammatica/Vocabolario categories (those are excluded
+  // from the simulation by design).
+  const isPrefetturaRelevantCategory =
+    weakest === 'Lettura' || weakest === 'Situazioni' || weakest === 'Ascolto';
+  const themeHint = isPrefetturaRelevantCategory
+    ? `\nIMPORTANT thematic bias for this batch: prefer Italian public-service and everyday-bureaucracy contexts — going to the Comune / Anagrafe, the Questura (permits), the ASL or CUP (medical appointments), INPS / patronato, the Poste (raccomandata, bollettini), apartment renting / condominio / utility bills (luce, gas), the Anagrafe degli stranieri, codice fiscale, tessera sanitaria. Avoid tourist / lifestyle scenarios such as pizza, gondola, agriturismo, fashion shopping — the bank is already saturated in those.\n`
+    : '';
+
   // "Do not repeat these recent question patterns" — cheapest novelty lever
   // we have. Trim each text to first 80 chars so the prompt stays compact.
   const recentTexts = getDb().recentQuestionTexts(examType, 20)
@@ -105,7 +119,7 @@ export async function generateBatchAndPersist(ai: GoogleGenAI, examType: string,
   const prompt = `Generate a JSON array of ${safeN} fresh Italian QCER A2 exam questions for examType="${examType}".
 Each item: { id (unique string starting with "gen_a2_${examType}_"), category ('Grammatica'|'Vocabolario'|'Lettura'|'Situazioni'), section, questionText (use "__________" as the blank), options (array of ${optionCount} strings), correctAnswerIndex (0-based, must point to a valid option), explanation, difficulty:"A2", optional context }.
 Strictly valid A2 Italian grammar; no duplicates within the batch.
-${biasHint}${novelty}${fewShotBlock(examType)}`;
+${biasHint}${themeHint}${novelty}${fewShotBlock(examType)}`;
 
   try {
     const response = await ai.models.generateContent({

@@ -1,12 +1,29 @@
+export interface WritingPromptField {
+  id: string;
+  label: string;
+  placeholder?: string;
+  /** Hint for free-text format vs short token (used as the input's autocomplete bucket). */
+  type?: 'text' | 'short' | 'longtext';
+}
+
 export interface WritingPrompt {
   id: string;
   title: string;
-  examType: 'CILS A2' | 'PLIDA A2';
+  examType: 'CILS A2' | 'PLIDA A2' | 'Prefettura A2';
   tagline: string;
   promptText: string;
   guidelines: string[];
   targetWordCount: string;
   suggestedHelperWords: string[];
+  /**
+   * Optional Prefettura-specific extensions. `kind` distinguishes form-filling
+   * (modulo) from short formal/informal messages so the UI can render either
+   * labeled fields or a single textarea. `theme` is the public-service
+   * context (anagrafe, asl, inps, …) used to grade thematic spread.
+   */
+  kind?: 'modulo' | 'lettera_formale' | 'lettera_informale' | 'email_informale';
+  theme?: 'anagrafe' | 'questura' | 'asl' | 'inps' | 'poste' | 'locazione' | 'condominio' | 'lavoro' | 'scuola' | 'altro';
+  fields?: WritingPromptField[];
 }
 
 export const A2_WRITING_PROMPTS: WritingPrompt[] = [

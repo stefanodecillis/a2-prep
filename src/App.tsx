@@ -35,11 +35,15 @@ import {
   MicOff,
   Heart,
   Flame,
-  Edit3
+  Edit3,
+  Landmark,
+  X
 } from 'lucide-react';
 import { Question, QuizSession, StudyCard, CategoryStats } from './types';
 import { curatedQuestions, getQuestionsForQuiz, shuffleArray } from './data/questions';
 import { A2_WRITING_PROMPTS } from './data/writingPrompts';
+import { getBrowserId } from './lib/browserId';
+import { SimulazionePrefettura } from './components/SimulazionePrefettura';
 
 // QCER A2 Practice Sentences for correct voice pronunciation exercises
 const A2_PRONUNCIATION_CARDS = [
@@ -542,24 +546,6 @@ const A2_VOCAB_FLASHCARDS = [
   }
 ];
 
-// Per-browser pseudo-anonymous id, used so the server can avoid re-serving
-// recently-seen questions to the same user. No auth, no PII — just a UUID in
-// localStorage. Survives reloads, resets if the user clears site data.
-const BROWSER_ID_KEY = 'a2_prep_browser_id';
-function getBrowserId(): string {
-  try {
-    let id = localStorage.getItem(BROWSER_ID_KEY);
-    if (!id) {
-      id = (crypto as any).randomUUID
-        ? crypto.randomUUID()
-        : `b_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
-      localStorage.setItem(BROWSER_ID_KEY, id);
-    }
-    return id;
-  } catch {
-    return `transient_${Math.random().toString(36).slice(2, 10)}`;
-  }
-}
 
 async function reportQuestion(questionId: string, reason?: string): Promise<boolean> {
   try {
@@ -578,8 +564,9 @@ async function reportQuestion(questionId: string, reason?: string): Promise<bool
 
 export default function App() {
   // Navigation states
-  const [currentScreen, setCurrentScreen] = useState<'menu' | 'quiz' | 'results'>('menu');
-  const [examMode, setExamMode] = useState<'practice' | 'exam'>('practice');
+  const [currentScreen, setCurrentScreen] = useState<'menu' | 'quiz' | 'results' | 'prefettura'>('menu');
+  const [examMode, setExamMode] = useState<'practice' | 'exam' | 'prefettura'>('practice');
+  const [showPrefetturaInfo, setShowPrefetturaInfo] = useState(false);
   const [examType, setExamType] = useState<string>('all');
   const [activeBentoTab, setActiveBentoTab] = useState<'questions' | 'study-guide' | 'tutor-chat' | 'vocab-game' | 'voice-practice' | 'flashcards' | 'writing'>('questions');
 
@@ -740,21 +727,58 @@ export default function App() {
 
   // TTS State
   const [currentlySpeaking, setCurrentlySpeaking] = useState<string | null>(null);
+  // Cached audio element used when a question has a pre-generated MP3 (set by
+  // Phase 6's seed-audio pipeline). When present we play the file via HTML5
+  // <audio> instead of Web Speech — better Italian voice, exam-realistic.
+  const audioElRef = useRef<HTMLAudioElement | null>(null);
 
-  const speakItalian = (text: string) => {
-    if (!('speechSynthesis' in window)) {
-      return;
-    }
-
-    // If already speaking exactly this text, stop it
+  /**
+   * Speak an Italian snippet. If `audioUrl` is provided AND points to a real
+   * cached MP3, play that via HTML5 <audio> (no TTS cost, native voice).
+   * Otherwise fall back to the browser's Web Speech API.
+   *
+   * Both paths share the same `currentlySpeaking` UI state so the speaker
+   * icons toggle correctly regardless of which engine is playing.
+   */
+  const speakItalian = (text: string, audioUrl?: string) => {
+    // Toggle-off — if we're already speaking exactly this text, stop both engines.
     if (currentlySpeaking === text) {
-      window.speechSynthesis.cancel();
+      if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+      if (audioElRef.current) {
+        audioElRef.current.pause();
+        audioElRef.current.currentTime = 0;
+      }
       setCurrentlySpeaking(null);
       return;
     }
 
-    // Stop previous speech
-    window.speechSynthesis.cancel();
+    // Cut off whatever's playing first.
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    if (audioElRef.current) {
+      audioElRef.current.pause();
+      audioElRef.current.currentTime = 0;
+    }
+
+    // Branch 1: cached MP3 path — preferred for Ascolto.
+    if (audioUrl) {
+      const el = audioElRef.current ?? new Audio();
+      audioElRef.current = el;
+      el.src = audioUrl;
+      el.onended = () => setCurrentlySpeaking(prev => (prev === text ? null : prev));
+      el.onerror = () => setCurrentlySpeaking(prev => (prev === text ? null : prev));
+      setCurrentlySpeaking(text);
+      el.play().catch(err => {
+        // Autoplay policies on iOS Safari can reject .play() if not initiated
+        // by a user gesture — our speaker button satisfies that, but just in
+        // case, clear the speaking state so the icon doesn't get stuck.
+        console.warn('[audio] play() rejected:', err?.message);
+        setCurrentlySpeaking(prev => (prev === text ? null : prev));
+      });
+      return;
+    }
+
+    // Branch 2: Web Speech TTS fallback.
+    if (!('speechSynthesis' in window)) return;
 
     // Clean up text if it contains markdown or special symbols inside prompt
     let cleanedText = text
@@ -767,7 +791,7 @@ export default function App() {
 
     const utterance = new SpeechSynthesisUtterance(cleanedText);
     utterance.lang = 'it-IT';
-    
+
     // Try to find Italian voice
     const voices = window.speechSynthesis.getVoices();
     const italianVoice = voices.find(voice => voice.lang.toLowerCase().includes('it'));
@@ -789,6 +813,18 @@ export default function App() {
     setCurrentlySpeaking(text);
     window.speechSynthesis.speak(utterance);
   };
+
+  // Stop any in-flight playback when the active question changes. Without
+  // this the previous Ascolto MP3 (or TTS utterance) would keep playing into
+  // the new question. Mirrors the same logic inside SimulazionePrefettura.
+  useEffect(() => {
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+    if (audioElRef.current) {
+      audioElRef.current.pause();
+      audioElRef.current.currentTime = 0;
+    }
+    setCurrentlySpeaking(null);
+  }, [currentIndex, questions]);
 
   const startSpeechRecognition = () => {
     if (isRecognizing) return;
@@ -950,7 +986,7 @@ export default function App() {
   }, [chatMessages]);
 
   // Starts a new quiz session of 50 questions
-  const handleStartQuiz = async (selectedMode: 'practice' | 'exam') => {
+  const handleStartQuiz = async (selectedMode: 'practice' | 'exam' | 'prefettura') => {
     setExamMode(selectedMode);
     setCurrentIndex(0);
     setUserAnswers({});
@@ -959,10 +995,20 @@ export default function App() {
     setCurrentAiExplanation(null);
     setCoachingFeedback(null);
     setIsQuizCompleted(false);
-    setTimer(selectedMode === 'exam' ? 3600 : 0);
-    setTimerActive(selectedMode === 'exam');
+    const isTimed = selectedMode === 'exam' || selectedMode === 'prefettura';
+    setTimer(isTimed ? 3600 : 0);
+    setTimerActive(isTimed);
     setLocalStreak(0);
     setActiveBentoTab('questions');
+
+    // The Prefettura simulation has its own self-contained screen + state
+    // machine + per-section timers, and fetches its own structured payload.
+    // We just hand off to it.
+    if (selectedMode === 'prefettura') {
+      setIsGenerating(false);
+      setCurrentScreen('prefettura');
+      return;
+    }
 
     // No blocking generator screen: Transition immediately!
     setIsGenerating(false);
@@ -1179,7 +1225,8 @@ export default function App() {
         body: JSON.stringify({
           promptTitle: prompt.title,
           promptText: prompt.promptText,
-          studentText: studentWritingText
+          studentText: studentWritingText,
+          mode: examMode
         })
       });
       const data = await res.json();
@@ -1241,7 +1288,7 @@ export default function App() {
 
         {currentScreen === 'quiz' && (
           <div className="flex items-center gap-4">
-            {examMode === 'exam' && (
+            {examMode !== 'practice' && (
               <div className="bg-slate-100 px-4 py-1.5 rounded-full border border-slate-200 flex items-center gap-2 shadow-sm font-mono text-sm font-bold text-slate-700 animate-pulse">
                 <Clock className="w-4 h-4 text-emerald-600" />
                 <span>TEMPO: {formatTime(timer)}</span>
@@ -1281,13 +1328,13 @@ export default function App() {
               Sconfiggi l'esame di <span className="underline decoration-emerald-500 decoration-3">Italiano A2</span> con fiducia!
             </h2>
             <p className="text-base text-slate-500 max-w-xl mx-auto font-medium leading-relaxed">
-              Entrambe le modalità di studio offrono un ricco mix bilanciato composto da tutte le prove d'esame ufficiali, inclusi gli accordi e cloze di Siena **CILS** e gli abbinamenti di Dante **PLIDA**.
+              Tre modalità di studio: allenamento libero con il Tutor AI, simulazione esame generica QCER, e la nuova **Simulazione Prefettura** calibrata sul test ufficiale per il *permesso di soggiorno UE per soggiornanti di lungo periodo*.
             </p>
           </section>
 
-          {/* Two Main Modes Bento Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-            
+          {/* Three Main Modes Bento Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+
             {/* Box 1: Practice & Coach Mode */}
             <div id="card-mode-practice" className="bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-lg transition-all p-8 flex flex-col justify-between group relative overflow-hidden">
               <div className="absolute right-0 top-0 w-24 h-24 bg-gradient-to-br from-emerald-50 to-emerald-500/10 rounded-full filter blur-xl transform translate-x-6 -translate-y-6" />
@@ -1303,7 +1350,7 @@ export default function App() {
                   Pratica a passo libero con spiegazioni grammaticali istantanee. Include l'integrazione con la bacheca vocaboli, il simulatore di pronuncia vocale, flashcards intelligenti e il Tutor AI in tempo reale per conversare ed esercitarti.
                 </p>
               </div>
-              <button 
+              <button
                 onClick={() => handleStartQuiz('practice')}
                 disabled={isGenerating}
                 className="w-full bg-emerald-600 border border-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-6 rounded-2xl text-sm transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
@@ -1320,15 +1367,15 @@ export default function App() {
                 <div className="w-12 h-12 bg-slate-950 text-white rounded-2xl flex items-center justify-center mb-6">
                   <Clock className="w-6 h-6" />
                 </div>
-                <h3 className="text-xl font-extrabold text-slate-900 mb-2">Simulazione Esame Reale</h3>
+                <h3 className="text-xl font-extrabold text-slate-900 mb-2">Simulazione Esame Generica</h3>
                 <span className="inline-block text-[10px] font-black uppercase tracking-wider text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full mb-4">
-                  Mock Test a Tempo
+                  Mock Test QCER · 60 min
                 </span>
                 <p className="text-xs text-slate-500 font-semibold leading-relaxed mb-6">
-                  Mettiti alla prova con un test formale di 50 domande combinate estratte in tempo reale. Gestisci il timer di 60 minuti senza alcun aiuto visivo. Al termine riceverai un report con mappatura dettagliata degli errori elaborata dal modello AI.
+                  Mettiti alla prova con un test formale di 50 domande combinate CILS/PLIDA estratte in tempo reale. Gestisci il timer di 60 minuti senza alcun aiuto visivo. Al termine riceverai un report con mappatura dettagliata degli errori.
                 </p>
               </div>
-              <button 
+              <button
                 onClick={() => handleStartQuiz('exam')}
                 disabled={isGenerating}
                 className="w-full bg-slate-950 border border-slate-900 text-white font-bold py-4 px-6 rounded-2xl text-sm transition-all hover:bg-slate-800 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
@@ -1338,8 +1385,116 @@ export default function App() {
               </button>
             </div>
 
+            {/* Box 3: Official Prefettura Simulation — Permesso di soggiorno UE lungo periodo */}
+            <div id="card-mode-prefettura" className="bg-white rounded-3xl border-2 border-emerald-200 shadow-sm hover:shadow-lg transition-all p-8 flex flex-col justify-between group relative overflow-hidden">
+              {/* Tricolore accent stripe */}
+              <div className="absolute left-0 top-0 bottom-0 w-1.5 flex flex-col">
+                <div className="flex-1 bg-emerald-600" />
+                <div className="flex-1 bg-white" />
+                <div className="flex-1 bg-red-600" />
+              </div>
+              <div className="pointer-events-none absolute right-0 top-0 w-28 h-28 bg-gradient-to-br from-emerald-100 to-red-100/30 rounded-full filter blur-xl transform translate-x-6 -translate-y-6" />
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <div className="w-12 h-12 bg-gradient-to-br from-emerald-600 to-red-500 text-white rounded-2xl flex items-center justify-center">
+                    <Landmark className="w-6 h-6" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowPrefetturaInfo(true)}
+                    className="text-[10px] font-black uppercase tracking-wider text-slate-400 hover:text-slate-700 underline decoration-dotted underline-offset-4 cursor-pointer"
+                  >
+                    Cos'è?
+                  </button>
+                </div>
+                <h3 className="text-xl font-extrabold text-slate-900 mb-1">Simulazione Prefettura</h3>
+                <p className="text-[11px] font-bold text-slate-500 mb-3 italic">Test A2 ufficiale — permesso di soggiorno UE</p>
+                <span className="inline-block text-[10px] font-black uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full mb-4 border border-emerald-200">
+                  Ufficiale · Soglia 80/100
+                </span>
+                <p className="text-xs text-slate-500 font-semibold leading-relaxed mb-6">
+                  Tre sezioni come al test reale del Ministero dell'Interno: <strong>Ascolto</strong> (30 pt · 25 min), <strong>Lettura</strong> (35 pt · 25 min), <strong>Scrittura</strong> (35 pt · 10 min). Nessuna sezione orale, nessuna grammatica isolata. Devi raggiungere 80/100 per essere promosso.
+                </p>
+              </div>
+              <button
+                onClick={() => handleStartQuiz('prefettura')}
+                disabled={isGenerating}
+                className="w-full bg-gradient-to-r from-emerald-600 to-red-600 hover:from-emerald-700 hover:to-red-700 text-white font-bold py-4 px-6 rounded-2xl text-sm transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 shadow-md"
+              >
+                {isGenerating ? 'Preparazione Simulazione...' : 'Inizia Simulazione Prefettura'}
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+
           </div>
         </main>
+      )}
+
+      {/* Prefettura explainer modal */}
+      {showPrefetturaInfo && (
+        <div
+          className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setShowPrefetturaInfo(false)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-2xl w-full p-8 shadow-2xl relative max-h-[85vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setShowPrefetturaInfo(false)}
+              className="absolute top-4 right-4 w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 cursor-pointer"
+              aria-label="Chiudi"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-12 h-12 bg-gradient-to-br from-emerald-600 to-red-500 text-white rounded-2xl flex items-center justify-center">
+                <Landmark className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-xl font-extrabold text-slate-900 leading-tight">Cos'è il Test A2 della Prefettura</h3>
+                <p className="text-xs font-bold text-slate-500 italic">Permesso di soggiorno UE per soggiornanti di lungo periodo</p>
+              </div>
+            </div>
+            <div className="space-y-3.5 text-sm text-slate-700 font-medium leading-relaxed">
+              <p>
+                È il test gratuito di lingua italiana <strong>obbligatorio</strong> per ottenere il permesso di soggiorno UE per soggiornanti di lungo periodo (ex "carta di soggiorno"), introdotto dal <strong>D.M. 4 giugno 2010</strong> del Ministero dell'Interno e organizzato dalle Prefetture in collaborazione con i CPIA.
+              </p>
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2 text-xs">
+                <div className="flex justify-between"><span className="font-bold text-slate-500">Durata totale</span><span className="font-black text-slate-900">60 minuti</span></div>
+                <div className="flex justify-between"><span className="font-bold text-slate-500">Punteggio totale</span><span className="font-black text-slate-900">100 punti</span></div>
+                <div className="flex justify-between"><span className="font-bold text-slate-500">Soglia di promozione</span><span className="font-black text-emerald-700">≥ 80 / 100</span></div>
+                <div className="flex justify-between"><span className="font-bold text-slate-500">Sezioni</span><span className="font-black text-slate-900">3 (no orale)</span></div>
+                <div className="flex justify-between"><span className="font-bold text-slate-500">Costo</span><span className="font-black text-slate-900">Gratuito</span></div>
+              </div>
+              <div>
+                <h4 className="font-black text-slate-800 text-xs uppercase tracking-wider mb-2">Struttura</h4>
+                <ul className="space-y-1.5 text-xs">
+                  <li>• <strong>Ascolto</strong> — 30 pt, 25 min (comprensione di dialoghi e annunci registrati)</li>
+                  <li>• <strong>Lettura</strong> — 35 pt, 25 min (comprensione di testi della vita quotidiana e dei servizi pubblici)</li>
+                  <li>• <strong>Scrittura</strong> — 35 pt, 10 min (compilazione modulo + breve messaggio)</li>
+                </ul>
+              </div>
+              <p className="text-xs text-slate-500 italic">
+                Le certificazioni CILS, CELI, PLIDA o Roma Tre di livello A2 (o superiore) sostituiscono il test. La Simulazione Prefettura di questa app ricostruisce la struttura, i pesi e i tempi reali per allenarti come al test vero.
+              </p>
+              <p className="text-xs text-slate-500">
+                <strong>Fonte ufficiale:</strong> <a href="https://www.interno.gov.it/it/temi/immigrazione-e-asilo/modalita-dingresso/test-conoscenza-lingua-italiana" target="_blank" rel="noopener noreferrer" className="text-emerald-700 underline font-bold">interno.gov.it</a>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Simulazione Prefettura — dedicated self-contained flow (timers, sections, scoring) */}
+      {currentScreen === 'prefettura' && (
+        <SimulazionePrefettura
+          onExit={() => {
+            setExamMode('practice');
+            setCurrentScreen('menu');
+          }}
+        />
       )}
 
       {/* Main Study/Exam Area with Bento Grid Elements */}
@@ -1454,7 +1609,7 @@ export default function App() {
                         )}
                       </div>
                       <button
-                        onClick={() => speakItalian(questions[currentIndex].context!)}
+                        onClick={() => speakItalian(questions[currentIndex].context!, questions[currentIndex].audioUrl)}
                         className={`p-2.5 rounded-xl transition-all cursor-pointer border shrink-0 ${currentlySpeaking === questions[currentIndex].context ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white hover:bg-slate-50 text-slate-600 hover:text-emerald-600 border-slate-200 shadow-sm'}`}
                         title="Ascolta la pronuncia"
                       >
@@ -1481,7 +1636,7 @@ export default function App() {
                       {highlightDifficultWords(questions[currentIndex]?.questionText)}
                     </h3>
                     <button
-                      onClick={() => speakItalian(questions[currentIndex]?.questionText)}
+                      onClick={() => speakItalian(questions[currentIndex]?.questionText, questions[currentIndex]?.category === 'Ascolto' && !questions[currentIndex]?.context ? questions[currentIndex]?.audioUrl : undefined)}
                       className={`p-2 rounded-xl transition-all cursor-pointer border shrink-0 ${currentlySpeaking === questions[currentIndex]?.questionText ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-emerald-600 border-slate-200'}`}
                       title="Ascolta la pronuncia"
                     >
@@ -2772,7 +2927,10 @@ export default function App() {
               Il tuo Risultato d'Esame
             </h2>
             <p className="text-sm text-slate-500 font-semibold uppercase tracking-wider">
-              {correctCount >= 30 ? '🎉 Promosso! Livello A2 Raggiunto' : '✍️ Ci sei quasi! Ti consigliamo più esercizio'}
+              {correctCount >= (examMode === 'prefettura' ? 40 : 30) ? '🎉 Promosso! Livello A2 Raggiunto' : '✍️ Ci sei quasi! Ti consigliamo più esercizio'}
+              {examMode === 'prefettura' && (
+                <span className="block mt-1 text-[10px] text-slate-400 normal-case tracking-normal">Soglia ufficiale Prefettura · 80% (40/50 in Phase 1; ponderato 80/100 in Simulazione completa)</span>
+              )}
             </p>
 
             {/* Score Grid layout */}

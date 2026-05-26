@@ -13,7 +13,10 @@ import { getDb } from './server/db';
 import { seedFromCurated, warmupIfNeeded } from './server/seed';
 import { isWellFormedQuestion } from './server/validate';
 import { officialSamples } from './src/data/officialSamples';
+import { A2_WRITING_PROMPTS } from './src/data/writingPrompts';
+import { PREFETTURA_WRITING_PROMPTS } from './src/data/prefetturaPrompts';
 import { generateImageQuestions, getImagesDir, imageGenBatchSize, imageGenProbability, isImageGenEnabled } from './server/images';
+import { generateAudioForPendingAscolto, getAudioDir, isAudioGenEnabled } from './server/audio';
 import { generateBatchAndPersist, maxBankSize } from './server/topup';
 
 /**
@@ -77,6 +80,25 @@ app.use(express.json());
   const imagesDir = getImagesDir();
   if (!fs.existsSync(imagesDir)) fs.mkdirSync(imagesDir, { recursive: true });
   app.use('/generated-images', express.static(imagesDir, { maxAge: '7d', immutable: true }));
+}
+
+// Serve cached TTS audio for Ascolto questions. Mirrors the image static
+// route: content-hashed filenames make immutable caching safe — when we
+// upgrade the voice the filename changes, so browsers refetch.
+{
+  const audioDir = getAudioDir();
+  if (!fs.existsSync(audioDir)) fs.mkdirSync(audioDir, { recursive: true });
+  app.use('/generated-audio', express.static(audioDir, { maxAge: '7d', immutable: true }));
+}
+
+// Serve pre-generated seed audio shipped in the repo at src/data/seed_audio/.
+// These are baked into the deployed image (no runtime TTS cost) and
+// referenced by /seed-audio/<file>.mp3.
+{
+  const seedAudioDir = path.resolve(resolvedDirname, 'src/data/seed_audio');
+  if (fs.existsSync(seedAudioDir)) {
+    app.use('/seed-audio', express.static(seedAudioDir, { maxAge: '30d', immutable: true }));
+  }
 }
 
 // Helper for lazy loading Gemini SDK
@@ -479,6 +501,79 @@ app.post('/api/quiz/start', async (req: Request, res: Response) => {
     res.status(400).json({ success: false, error: 'browserId is required' });
     return;
   }
+
+  // Prefettura simulation has its own structured payload: 3 sections with
+  // section-scoped questions, durations, and per-item point weights so the
+  // client can show a faithful 30/35/35 = 100 score and 25/25/10 minute timers.
+  if (mode === 'prefettura') {
+    try {
+      const db = getDb();
+      const ascolto = db.fetchQuestionsForPrefetturaSection(browserId, 'ascolto', 10);
+      const lettura = db.fetchQuestionsForPrefetturaSection(browserId, 'lettura', 10);
+
+      // Bank-growth top-up so users see mostly different exercises each run —
+      // same idea as the practice/exam top-up below. The Prefettura-relevant
+      // categories (Ascolto, Situazioni, Lettura) are tiny compared to the
+      // Grammatica/Vocabolario banks today, so `pickWeakestCategory` inside
+      // the helper will pick one of them; the G8 thematic bias in topup.ts
+      // then nudges Gemini toward public-service contexts. Non-blocking.
+      topupTicks += 1;
+      const periodicDue = topupTicks % topupEveryN() === 0;
+      const pendingAscolto = db.countByPrefetturaSection('ascolto');
+      const pendingLettura = db.countByPrefetturaSection('lettura');
+      const scarcityDue = pendingAscolto < 30 || pendingLettura < 30;
+      if ((scarcityDue || periodicDue) && !isGeminiRateLimited() && process.env.GEMINI_API_KEY) {
+        generateBatchAndPersist(getGemini(), 'all', topupBatchSize()).catch(err =>
+          console.warn('[top-up:prefettura] background generation failed:', err?.message)
+        );
+      }
+
+      // (Audio top-up is NOT auto-triggered here.) Google Cloud TTS is
+      // priced per-character and the user opted to spend carefully —
+      // pre-generated seed audio ships in `src/data/seed_audio/` and is
+      // attached on boot in `server/seed.ts`. To synthesize audio for
+      // AI-generated Ascolto items added after seed, call POST
+      // /api/generate-audio explicitly (requires AUDIO_GEN_ENABLED=true).
+      // Prefer the Prefettura-specific prompt set (form-filling + bureaucratic
+      // messages). Fall back to the generic CILS/PLIDA prompts if the new
+      // bank is somehow empty.
+      const promptPool = PREFETTURA_WRITING_PROMPTS.length > 0
+        ? PREFETTURA_WRITING_PROMPTS
+        : A2_WRITING_PROMPTS;
+      const prompt = promptPool[Math.floor(Math.random() * promptPool.length)];
+      // Section weights are fixed at 30 / 35 / 35 = 100. If the bank can't
+      // supply 10 items in a section (early days, before AI top-up has
+      // produced more Ascolto material) we scale up per-item points so the
+      // section still sums to its target weight. Better than showing the
+      // user a /91 total they can never improve to /100.
+      const ASCOLTO_SECTION_POINTS = 30;
+      const LETTURA_SECTION_POINTS = 35;
+      const SCRITTURA_SECTION_POINTS = 35;
+      const ascPerItem = ascolto.length > 0 ? ASCOLTO_SECTION_POINTS / ascolto.length : 0;
+      const letPerItem = lettura.length > 0 ? LETTURA_SECTION_POINTS / lettura.length : 0;
+      res.json({
+        success: true,
+        mode: 'prefettura',
+        sections: [
+          { id: 'ascolto', label: 'Ascolto', durationSec: 25 * 60, pointsPerItem: ascPerItem, questions: ascolto },
+          { id: 'lettura', label: 'Lettura', durationSec: 25 * 60, pointsPerItem: letPerItem, questions: lettura },
+          { id: 'scrittura', label: 'Scrittura', durationSec: 10 * 60, points: SCRITTURA_SECTION_POINTS, prompt },
+        ],
+        totalPoints: 100,
+        passingPoints: 80,
+        bankCounts: {
+          ascolto: db.countByPrefetturaSection('ascolto'),
+          lettura: db.countByPrefetturaSection('lettura'),
+        },
+      });
+      return;
+    } catch (error: any) {
+      console.error('[quiz/start prefettura] error:', error);
+      res.status(500).json({ success: false, error: 'Failed to start Prefettura simulation: ' + error?.message });
+      return;
+    }
+  }
+
   const safeCount = Math.max(1, Math.min(100, Number(count) || 50));
   try {
     const db = getDb();
@@ -559,6 +654,16 @@ function topupBatchSize(): number {
   return raw;
 }
 
+// Audio top-up trigger — non-blocking, fires from /api/quiz/start when the
+// Prefettura simulation is requested. Idempotent: a no-op if the feature is
+// off, no Ascolto rows are missing audio, or the daily cap is reached.
+function maybeFireAudioBatch(): void {
+  if (!isAudioGenEnabled()) return;
+  generateAudioForPendingAscolto(3).catch(err =>
+    console.warn('[audio-gen] background trigger failed:', err?.message)
+  );
+}
+
 // Image-bearing questions piggyback on quiz starts (separate trigger from
 // the text top-up): only when the feature flag is on and a random roll
 // passes the configured probability.
@@ -589,6 +694,26 @@ app.post('/api/generate-image-questions', async (req: Request, res: Response) =>
     res.json({ success: true, inserted });
   } catch (error: any) {
     logApiWarning('generate-image-questions', error);
+    res.status(500).json({ success: false, error: error?.message });
+  }
+});
+
+// Manual trigger to synthesize cached audio for Ascolto questions that
+// don't yet have an `audio_url`. Useful for one-off backfills after enabling
+// the feature on an existing deploy. Honors AUDIO_GEN_MAX_PER_DAY.
+app.post('/api/generate-audio', async (req: Request, res: Response) => {
+  if (!isAudioGenEnabled()) {
+    res.status(403).json({ success: false, error: 'AUDIO_GEN_ENABLED is not true' });
+    return;
+  }
+  const { count } = req.body ?? {};
+  const requested = Number.isInteger(count) && count > 0 ? Math.min(20, count) : 5;
+  try {
+    const generated = await generateAudioForPendingAscolto(requested);
+    const remaining = getDb().countAscoltoMissingAudio();
+    res.json({ success: true, generated, ascoltoMissingAudio: remaining });
+  } catch (error: any) {
+    logApiWarning('generate-audio', error);
     res.status(500).json({ success: false, error: error?.message });
   }
 });
@@ -794,41 +919,58 @@ ${mistakeListText}
 
 // Endpoint to evaluate open text production writing exercises against A2 criteria
 app.post('/api/evaluate-writing', async (req: Request, res: Response) => {
-  const { promptTitle, promptText, studentText } = req.body;
-  if (!studentText || !studentText.trim()) {
+  const { promptTitle, promptText, studentText, mode, kind, studentFields, promptGuidelines, promptTheme } = req.body;
+
+  // Compose the text-to-grade. For form-filling tasks (kind === 'modulo') the
+  // client may send a structured `studentFields: [{label, value}, ...]` array;
+  // we flatten it into a labeled block so Gemini can grade each field in
+  // context. For textarea-style prompts we just use `studentText`.
+  let composed = (studentText || '').toString();
+  if (Array.isArray(studentFields) && studentFields.length > 0) {
+    composed = studentFields
+      .map((f: any) => `${(f.label || 'Campo').toString()}: ${(f.value || '').toString().trim()}`)
+      .join('\n');
+  }
+  if (!composed.trim()) {
     res.status(400).json({ success: false, error: 'Student text is required' });
     return;
   }
 
-  const rawWords = studentText.split(/\s+/).filter(Boolean);
+  const isPrefettura = mode === 'prefettura';
+  const isModulo = kind === 'modulo';
+  const passingScore = isPrefettura ? 16 : 12;
+
+  const rawWords = composed.split(/\s+/).filter(Boolean);
   const wordCount = rawWords.length;
   let score = 10;
-  let passed = false;
+
+  // Form-filling tasks have lower word counts by nature; relax the heuristic
+  // brackets so the offline fallback still hands out plausible scores.
+  if (isModulo) {
+    if (wordCount >= 8) score = 13;
+    if (wordCount >= 18) score = 16;
+    if (wordCount >= 28) score = 18;
+  } else {
+    if (wordCount >= 20) score = 13;
+    if (wordCount >= 45) score = 16;
+    if (wordCount >= 70) score = 18;
+  }
+  const passed = score >= passingScore;
   
-  if (wordCount >= 20) {
-    score = 13;
-    passed = true;
-  }
-  if (wordCount >= 45) {
-    score = 16;
-  }
-  if (wordCount >= 70) {
-    score = 18;
-  }
-  
+  const previewSnippet = composed.substring(0, Math.min(30, composed.length)) + "...";
   const fallbackEvaluation = {
     score,
     passed,
     wordCount,
     errors: [
       {
-        original: studentText.substring(0, Math.min(30, studentText.length)) + "...",
-        correction: studentText.substring(0, Math.min(30, studentText.length)) + "...",
+        original: previewSnippet,
+        correction: previewSnippet,
         category: "Stile",
         explanation: "In modalità di emergenza offline (cooldown attivo), non possiamo effettuare indagini sillaba per sillaba delle doppie, ma la struttura verbale è stata analizzata globalmente."
       }
     ],
-    perfectVersion: studentText,
+    perfectVersion: composed,
     coachingReport: `🤖 **Valutazione Sostitutiva Offline (Limite Quota Cooldown)**:
 Hai completato con successo la stesura del testo scrivendo d'istinto ${wordCount} parole! 
 
@@ -844,16 +986,34 @@ Sebbene i server Gemini dedicati stiano ricaricando l'energia giornaliera, il Pr
   try {
     const ai = getGemini();
 
-    const systemPrompt = `You are "Professore", an official Italian language examiner grading an Italian QCER A2 writing exam.
+    const examContext = isPrefettura
+      ? 'the official Italian government A2 test administered by the Prefettura for the *permesso di soggiorno UE per soggiornanti di lungo periodo* (D.M. 4 giugno 2010). The passing threshold for this exam is 80% (≥16/20 on the writing section).'
+      : 'an Italian QCER A2 writing exam (CILS/PLIDA standard). Passing is 12 or above.';
+
+    const formatNote = isModulo
+      ? `\nIMPORTANT: this is a FORM-FILLING task (modulo). The student answer below is a list of "Field label: value" lines, one per form field. Grade for: (1) completeness — were all fields filled out? (2) plausibility — do the values make sense for the field's label? (3) orthography and agreement WITHIN each value. Short values are expected; do NOT penalize brevity. Word-count metrics do not apply meaningfully here, so estimate proportional to fields filled.`
+      : '';
+
+    const guidelinesList = Array.isArray(promptGuidelines) && promptGuidelines.length > 0
+      ? promptGuidelines.map((g: string) => `  - ${g}`).join('\n')
+      : '';
+    const criteriaBlock = guidelinesList
+      ? `\n\nThis exercise has the following SPECIFIC SUCCESS CRITERIA. You MUST verify the student's answer against EACH of these and reference any that are missing or weak in your error list and coaching report:\n${guidelinesList}`
+      : '';
+    const themeNote = promptTheme
+      ? `\nThematic context: "${promptTheme}" (Italian public-service domain — the response should sound appropriate for that context, with realistic register).`
+      : '';
+
+    const systemPrompt = `You are "Professore", an official Italian language examiner grading ${examContext}${formatNote}${themeNote}
     Grade the student's text based on the following task:
     Task Title: "${promptTitle}"
-    Task Description: "${promptText}"
- 
+    Task Description: "${promptText}"${criteriaBlock}
+
     Student Written Text:
-    "${studentText}"
- 
+    "${composed}"
+
     Your evaluation metrics:
-    - Score: Integer from 0 to 20 (CILS/PLIDA standard). Passing is 12 or above. Give a fair but encouraging score appropriate for an A2 learner.
+    - Score: Integer from 0 to 20. Passing is ${passingScore} or above. Give a fair but encouraging score appropriate for an A2 learner. Penalise the score when the student's answer fails to address one or more of the SUCCESS CRITERIA listed above (if any).
     - Word count: Count the exact number of words the student wrote.
     - Errors analysis: List precise morphological, orthographic, agreement, or lexical errors, explaining them briefly in English.
     - Versione Perfetta: Provide a beautiful, highly idiomatic, natural rewriting of the text in correct A2-level Italian.
@@ -892,6 +1052,9 @@ Sebbene i server Gemini dedicati stiano ricaricando l'energia giornaliera, il Pr
     });
 
     const parsedData = JSON.parse(response.text || '{}');
+    if (typeof parsedData.score === 'number') {
+      parsedData.passed = parsedData.score >= passingScore;
+    }
     res.json({ success: true, evaluation: parsedData });
   } catch (error: any) {
     logApiWarning('evaluate-writing', error);

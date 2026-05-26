@@ -3,18 +3,23 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+export type PrefetturaSection = 'ascolto' | 'lettura' | 'scrittura';
+
 export interface Question {
   id: string;
-  category: 'Grammatica' | 'Vocabolario' | 'Lettura' | 'Situazioni' | 'Ascolto' | 'Immagini' | string;
-  section: string; // e.g., 'Preposizioni', 'Passato Prossimo', 'Dialoghi'
+  category: 'Grammatica' | 'Vocabolario' | 'Lettura' | 'Situazioni' | 'Ascolto' | 'Immagini' | 'TempiVerbali' | string;
+  section: string; // e.g., 'Preposizioni', 'Passato Prossimo', 'Dialoghi'; for TempiVerbali: '<tenseId>:<stepKind>'
+  prefetturaSection?: PrefetturaSection; // bucket for the official Prefettura A2 simulation
   questionText: string;
   options: string[];
   correctAnswerIndex: number;
-  explanation: string; // Helpful explanation detailing grammatical rules
+  explanation: string;
   difficulty: 'A2';
-  context?: string; // Optional context, like reading passage or dialouge context
-  imageUrl?: string; // Optional image associated with the question (e.g. nanobanana / scenic)
-  optionImages?: string[]; // Optional array of images for options A, B, C (PLIDA-style drawings)
+  context?: string;
+  imageUrl?: string;
+  audioUrl?: string;
+  optionImages?: string[];
+  verbInfinitive?: string; // for TempiVerbali items: the infinitive the item is about (used for weak-verb tracking)
 }
 
 export interface QuizSession {

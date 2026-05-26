@@ -1658,10 +1658,10 @@ const curatedPractice = curatedQuestions.filter((_, idx) => idx % 2 === 0);
 const curatedExam = curatedQuestions.filter((_, idx) => idx % 2 !== 0);
 
 export function getQuestionsForQuiz(
-  mode: 'practice' | 'exam',
+  mode: 'practice' | 'exam' | 'prefettura',
   examType: string = 'all'
 ): Question[] {
-  // Disjoint division: Practice gets practice, Exam gets exam
+  // Disjoint division: Practice gets practice, Exam/Prefettura get exam pool
   let staticCurated = (mode === 'practice' ? curatedPractice : curatedExam).filter(q => q && q.id);
   
   // Filter core static curated items by specific syllabus target if selected
@@ -1699,7 +1699,7 @@ export function getQuestionsForQuiz(
   const neededDynamic = 50 - basePool.length;
   
   // Create a beautiful dynamic generator with unique seeds to populate whatever count is remaining
-  const isExamMode = mode === 'exam';
+  const isExamMode = mode === 'exam' || mode === 'prefettura';
   const dynamicGenerated = generateDynamicQuestionsPool(isExamMode, examType, neededDynamic > 0 ? neededDynamic : 30);
   
   const combined = [...basePool, ...dynamicGenerated].filter(q => q && q.id && q.options && Array.isArray(q.options));

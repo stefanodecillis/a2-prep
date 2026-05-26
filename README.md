@@ -1,9 +1,20 @@
 # a2-prep — Italian A2 Exam Prep
 
-Italian QCER A2 exam prep app: customizable 50-question quizzes (CILS, PLIDA,
-QCER variants), AI explanations, vocab/flashcard tooling, dynamic question
-generation. React 19 + Vite frontend, Express + Bun backend, SQLite for
-persistence, Gemini for AI.
+Prep app for the Italian government **A2 language test** that foreigners take at
+the Prefettura to obtain the *permesso di soggiorno UE per soggiornanti di lungo
+periodo* (long-stay EU residence permit, D.M. 4 giugno 2010). Three modes from
+one home screen:
+
+1. **Allenamento con Assistenza** — free practice with the Tutor AI, vocab
+   flashcards, pronunciation simulator, and instant grammar explanations.
+2. **Simulazione Esame Generica** — 50-question timed mock test in the
+   CILS/PLIDA style, with end-of-session error analysis (60% passing).
+3. **Simulazione Prefettura** — calibrated to the real Prefettura test: three
+   sections (Ascolto 30 pt · Lettura 35 pt · Scrittura 35 pt), 60 minutes total,
+   **80/100 passing threshold**, no oral section, no standalone grammar.
+
+React 19 + Vite frontend, Express + Bun backend, SQLite for persistence, Gemini
+for AI question generation, explanations, and writing evaluation.
 
 ## Run locally
 
@@ -117,3 +128,33 @@ subdomain / TLS are out of scope.
 | `IMAGE_GEN_PROBABILITY` | no | `0.1` | Per-top-up trigger probability (0..1) |
 | `IMAGE_GEN_BATCH_SIZE` | no | `2` | Images per batch (each costs a paid call) |
 | `IMAGE_GEN_MODEL` | no | `imagen-3.0-fast-generate-001` | Image model override |
+| `AUDIO_GEN_ENABLED` | no | `false` | Cache native-quality MP3s for Ascolto via Google Cloud TTS |
+| `GOOGLE_TTS_API_KEY` / `GOOGLE_TTS_KEY` | no | reuses `GEMINI_API_KEY` | Dedicated key for Cloud Text-to-Speech. Either name is accepted. Use this when your `GEMINI_API_KEY` is an AI Studio key (those don't have TTS access — needs a Cloud Console key). |
+| `AUDIO_GEN_BATCH_SIZE` | no | `3` | Ascolto items synthesized per quiz-start trigger |
+| `AUDIO_GEN_MAX_PER_DAY` | no | `50` | Hard daily cap on TTS calls (per container, resets at UTC midnight) |
+| `AUDIO_GEN_VOICE` | no | `it-IT-Neural2-A` | Google TTS voice name (any `it-IT-*` voice works) |
+| `AUDIO_GEN_ENCODING` | no | `MP3` | `MP3` or `OGG_OPUS` |
+
+### Cost-careful audio strategy
+
+Google Cloud TTS is priced per character (~$16/M chars on Neural2). The default deploy makes **zero TTS API calls at runtime** — instead:
+
+1. **Pre-generated seed audio.** A one-shot CLI script synthesises audio for the curated Ascolto bank on your dev machine, then commits the MP3s into the repo at `src/data/seed_audio/` (~120 KB per item). At boot, `server/seed.ts` reads `src/data/seed_audio/manifest.json` and attaches the matching `audio_url` to each question. No env vars required at runtime — the MP3s are served by Express at `/seed-audio/<file>.mp3`.
+
+2. **Opt-in runtime synthesis** for AI-generated Ascolto items (added later by the periodic top-up). Off by default. To enable, set `AUDIO_GEN_ENABLED=true` and POST `/api/generate-audio` explicitly when you want to grow the audio bank. The runtime never auto-fires — there's no per-quiz-start trigger.
+
+### Regenerating seed audio
+
+```sh
+# 1. Enable the Cloud Text-to-Speech API on your Google Cloud project:
+#    https://console.cloud.google.com/apis/library/texttospeech.googleapis.com
+# 2. Make sure your GEMINI_API_KEY (or a dedicated GOOGLE_TTS_API_KEY) has
+#    no API restrictions or has the TTS API allowed in Credentials.
+AUDIO_GEN_ENABLED=true bun scripts/prefetch-seed-audio.ts
+
+# 3. Commit the resulting files:
+git add src/data/seed_audio/
+git commit -m "Ship pre-generated Ascolto audio"
+```
+
+The script is idempotent: re-running synthesises audio only for Ascolto items not yet in the manifest, so new curated additions or AI top-ups can be incrementally backed by audio without re-burning the TTS budget for existing items.
