@@ -75,7 +75,9 @@ const SCHEMA_STATEMENTS: string[] = [
   `CREATE INDEX IF NOT EXISTS idx_questions_verb_training ON questions(category, section, is_disabled)`,
   `CREATE INDEX IF NOT EXISTS idx_questions_exam_type ON questions(exam_type, is_disabled)`,
   `CREATE INDEX IF NOT EXISTS idx_questions_source ON questions(source)`,
-  `CREATE INDEX IF NOT EXISTS idx_questions_prefettura_section ON questions(prefettura_section, is_disabled)`,
+  // Note: prefettura_section index is created inside the migration block below,
+  // not here — on databases that pre-date that column the CREATE INDEX would
+  // fail before the ALTER TABLE has had a chance to run.
   `CREATE TABLE IF NOT EXISTS explanations (
     question_id TEXT NOT NULL,
     selected_index INTEGER NOT NULL,
