@@ -44,6 +44,7 @@ import { curatedQuestions, getQuestionsForQuiz, shuffleArray } from './data/ques
 import { A2_WRITING_PROMPTS } from './data/writingPrompts';
 import { getBrowserId } from './lib/browserId';
 import { SimulazionePrefettura } from './components/SimulazionePrefettura';
+import { VerbTensesTraining } from './components/VerbTensesTraining';
 
 // QCER A2 Practice Sentences for correct voice pronunciation exercises
 const A2_PRONUNCIATION_CARDS = [
@@ -568,7 +569,7 @@ export default function App() {
   const [examMode, setExamMode] = useState<'practice' | 'exam' | 'prefettura'>('practice');
   const [showPrefetturaInfo, setShowPrefetturaInfo] = useState(false);
   const [examType, setExamType] = useState<string>('all');
-  const [activeBentoTab, setActiveBentoTab] = useState<'questions' | 'study-guide' | 'tutor-chat' | 'vocab-game' | 'voice-practice' | 'flashcards' | 'writing'>('questions');
+  const [activeBentoTab, setActiveBentoTab] = useState<'questions' | 'study-guide' | 'tutor-chat' | 'vocab-game' | 'voice-practice' | 'flashcards' | 'writing' | 'verb-tenses'>('questions');
 
   // Flashcards Game States
   const [currentFlashIndex, setCurrentFlashIndex] = useState(0);
@@ -1566,12 +1567,19 @@ export default function App() {
                     <Flame className="w-3.5 h-3.5 shrink-0 text-amber-500" />
                     Flashcard A2
                   </button>
-                  <button 
+                  <button
                     onClick={() => setActiveBentoTab('writing')}
                     className={`flex-grow min-w-[100px] flex items-center justify-center gap-1.5 text-[11px] font-bold py-2.5 px-3 rounded-xl transition-all cursor-pointer ${activeBentoTab === 'writing' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
                   >
                     <Edit3 className="w-3.5 h-3.5 shrink-0 text-blue-500" />
                     Produzione Scritta
+                  </button>
+                  <button
+                    onClick={() => setActiveBentoTab('verb-tenses')}
+                    className={`flex-grow min-w-[105px] flex items-center justify-center gap-1.5 text-[11px] font-bold py-2.5 px-3 rounded-xl transition-all cursor-pointer ${activeBentoTab === 'verb-tenses' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'}`}
+                  >
+                    <BrainCircuit className="w-3.5 h-3.5 shrink-0 text-violet-500" />
+                    Tempi Verbali
                   </button>
                 </div>
               )}
@@ -2747,6 +2755,11 @@ export default function App() {
                   </div>
                 );
               })()}
+
+              {/* TAB CONTENT 8: Verb Tenses Training — guided path through the 6 A2 tenses */}
+              {examMode === 'practice' && activeBentoTab === 'verb-tenses' && (
+                <VerbTensesTraining onExit={() => setActiveBentoTab('questions')} />
+              )}
 
               {/* PRACTICE MODE COMPANION: Explanation block layout below primary questions */}
               {examMode === 'practice' && activeBentoTab === 'questions' && userAnswers[questions[currentIndex].id] !== undefined && (

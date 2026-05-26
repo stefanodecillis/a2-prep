@@ -18,6 +18,8 @@ import { PREFETTURA_WRITING_PROMPTS } from './src/data/prefetturaPrompts';
 import { generateImageQuestions, getImagesDir, imageGenBatchSize, imageGenProbability, isImageGenEnabled } from './server/images';
 import { generateAudioForPendingAscolto, getAudioDir, isAudioGenEnabled } from './server/audio';
 import { generateBatchAndPersist, maxBankSize } from './server/topup';
+import { fetchOrGenerate, warmupVerbTraining, type VerbTrainingRequest } from './server/verbTraining';
+import { TENSE_ORDER, type TenseId, type StepKind } from './src/data/verbTenses';
 
 /**
  * Build a short few-shot block from real exam samples that match the
@@ -610,6 +612,72 @@ app.post('/api/quiz/start', async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('[quiz/start] error:', error);
     res.status(500).json({ success: false, error: 'Failed to start quiz: ' + error?.message });
+  }
+});
+
+// Generate or fetch verb-tense training drill items. Cache-first via the
+// shared questions table (category='TempiVerbali', section='<tense>:<step>').
+// Mirrors /api/quiz/start: dedupes per browser via seen_questions, fires a
+// background warmup when the bucket is short.
+app.post('/api/verb-training/items', async (req: Request, res: Response) => {
+  const { browserId, tense, step, count, redrillVerbs } = req.body ?? {};
+
+  if (!browserId || typeof browserId !== 'string') {
+    res.status(400).json({ success: false, error: 'browserId is required' });
+    return;
+  }
+  if (!tense || !TENSE_ORDER.includes(tense as TenseId)) {
+    res.status(400).json({ success: false, error: 'invalid tense' });
+    return;
+  }
+  const allowedSteps: StepKind[] = ['vocab', 'recognize', 'conjugate', 'context', 'mixed'];
+  if (!step || !allowedSteps.includes(step as StepKind)) {
+    res.status(400).json({ success: false, error: 'invalid step' });
+    return;
+  }
+  const safeCount = Math.max(1, Math.min(20, Number(count) || 8));
+
+  const request: VerbTrainingRequest = {
+    browserId,
+    tense: tense as TenseId,
+    step: step as StepKind,
+    count: safeCount,
+    redrillVerbs: Array.isArray(redrillVerbs) ? redrillVerbs.slice(0, 10).map(String) : undefined,
+  };
+
+  try {
+    if (isGeminiRateLimited()) {
+      // Rate-limited: serve whatever's cached, no synchronous generation.
+      const db = getDb();
+      const cached = db.fetchVerbTrainingItems(
+        request.browserId, request.tense, request.step, request.count, request.redrillVerbs,
+      );
+      res.json({ success: true, items: cached, isFallback: cached.length < request.count });
+      return;
+    }
+
+    const result = await fetchOrGenerate(getGemini(), request);
+
+    // Background warmup if the bucket is below target. Non-blocking.
+    const cached = getDb().countVerbTrainingItems(request.tense, request.step);
+    if (cached < 24 && !isGeminiRateLimited() && process.env.GEMINI_API_KEY) {
+      warmupVerbTraining(getGemini(), request.tense, request.step).catch(err =>
+        console.warn('[verb-training warmup]', err?.message)
+      );
+    }
+
+    res.json({ success: true, items: result.items, isFallback: result.isFallback });
+  } catch (error: any) {
+    logApiWarning('verb-training/items', error);
+    // Last-resort: try to serve cached items even on error.
+    try {
+      const cached = getDb().fetchVerbTrainingItems(
+        request.browserId, request.tense, request.step, request.count, request.redrillVerbs,
+      );
+      res.json({ success: true, items: cached, isFallback: true });
+    } catch (cacheErr: any) {
+      res.status(500).json({ success: false, error: error?.message || cacheErr?.message });
+    }
   }
 });
 
